@@ -814,8 +814,29 @@ reinicio SQLite no reutiliza los autoincrementos y la segunda pasada fallaría e
 App móvil nativa, chat interno, pasarela de pago automática, GPS, mapas, IA generativa,
 videollamadas, suscripciones y sistema de disputas.
 
-### Despliegue
-El paso a paso está en **`DESPLIEGUE.md`**: repositorio, PM2, Nginx, certificado y copias.
+### Despliegue — **EN PRODUCCIÓN**: https://conectaia.solucionesctec.com
+
+Servidor Hetzner `87.99.144.139` (`eskulclass-server`), **compartido con 6 aplicaciones más**
+(publipropiedades 3000, calificaprof 3001, iper-innova 3002, medicaia, nutriia, nutrichefia).
+ConectaIA vive en `/var/www/conectaia`, proceso PM2 `conectaia`, **puerto 3003**.
+
+```bash
+# Actualizar producción
+ssh -i ~/.ssh/publipropiedades_deploy root@87.99.144.139
+cd /var/www/conectaia && git pull && npm ci && npm run build && pm2 restart conectaia
+```
+
+⚠️ **Es un servidor compartido: `nginx -t` SIEMPRE antes de `systemctl reload nginx`.** Una
+configuración mala tumba los otros seis sitios, no solo este.
+
+⚠️ **`www.conectaia.solucionesctec.com` no resuelve** — falta el registro DNS. El certificado se
+emitió solo para el dominio sin `www`; cuando exista el registro hay que ampliarlo con
+`certbot --nginx -d conectaia.solucionesctec.com -d www.conectaia.solucionesctec.com`.
+
+Copias diarias (03:20, se guardan 14 días) en `/root/backups/conectaia/`: la base **y** los
+uploads, por `copia.sh`.
+
+El paso a paso completo está en **`DESPLIEGUE.md`**.
 
 - Repositorio `git@github.com:abantostechnology2030/conectaia.git` · dominio
   **www.conectaia.solucionesctec.com** · puerto interno **3003**, el mismo que en local.

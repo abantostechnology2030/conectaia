@@ -1,6 +1,25 @@
 # Desplegar ConectaIA
 
-Dominio: **www.conectaia.solucionesctec.com** · Repositorio:
+> ## ✅ YA ESTÁ DESPLEGADO — https://conectaia.solucionesctec.com
+>
+> | | |
+> |---|---|
+> | **Servidor** | Hetzner `87.99.144.139` (`eskulclass-server`), compartido con 6 apps más |
+> | **Ruta** | `/var/www/conectaia` · **PM2**: `conectaia` · **puerto 3003** |
+> | **Nginx** | `/etc/nginx/sites-enabled/conectaia.solucionesctec.com` |
+> | **SSL** | Let's Encrypt, renovación automática |
+> | **Copias** | `/root/backups/conectaia/` — diarias a las 03:20, 14 días |
+> | **Llave SSH** | `C:\Users\user\.ssh\publipropiedades_deploy` (la misma de publipropiedades) |
+>
+> ⚠️ **`www.conectaia.solucionesctec.com` NO resuelve todavía.** Falta el registro DNS; el
+> certificado se emitió solo para el dominio sin `www`. Cuando exista el registro:
+> `certbot --nginx -d conectaia.solucionesctec.com -d www.conectaia.solucionesctec.com`
+>
+> Lo que sigue es la guía completa, por si hay que rehacerlo o llevarlo a otro servidor.
+
+---
+
+Dominio: **conectaia.solucionesctec.com** · Repositorio:
 `git@github.com:abantostechnology2030/conectaia.git` · Puerto interno: **3003**
 
 El servidor sirve varias aplicaciones (3000 calificaprof, 3001 publipropiedades, 3002
