@@ -67,7 +67,11 @@ async function entrar({ lado, registrando = true }) {
         nombres: 'Prueba',
         apellidos: 'Entrada',
         email,
+        // Único como el correo: el registro rechaza un DNI repetido.
+        dni: String(Math.floor(10000000 + Math.random() * 90000000)),
         password: 'demo123',
+        // Obligatorio desde que el alta pide todos los datos.
+        celular: '987000999',
         ciudad: 'Cajamarca',
         // El registro manda el lado que venía del home, de fondo.
         ...(lado ? { modo: lado } : {}),

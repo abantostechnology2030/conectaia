@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Avatar } from '@/components/Avatar'
+import { DNI_DIGITOS } from '@/lib/dni'
 
 type Datos = {
   nombres: string
@@ -157,11 +158,39 @@ export default function PerfilForm({ datos }: { datos: Datos }) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
+          {/*
+            El DNI se escribe UNA vez, igual que el correo con el que se entra:
+            es lo que sostiene "una persona, una cuenta", y dejarlo editable
+            convertiría esa regla en un trámite de treinta segundos.
+
+            Las cuentas anteriores a que se pidiera en el registro lo tienen
+            vacío, así que a ellas sí se les ofrece el campo para completarlo.
+          */}
           <div>
-            <label className="etiqueta" htmlFor="dni">
-              DNI
-            </label>
-            <input id="dni" name="dni" inputMode="numeric" defaultValue={datos.dni ?? ''} className="campo" />
+            {datos.dni ? (
+              <>
+                <span className="etiqueta">DNI</span>
+                <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-600">
+                  {datos.dni}
+                </p>
+                <p className="ayuda">El DNI no se puede cambiar desde aquí.</p>
+              </>
+            ) : (
+              <>
+                <label className="etiqueta" htmlFor="dni">
+                  DNI
+                </label>
+                <input
+                  id="dni"
+                  name="dni"
+                  inputMode="numeric"
+                  maxLength={DNI_DIGITOS}
+                  className="campo"
+                  placeholder="12345678"
+                />
+                <p className="ayuda">Se guarda una sola vez: después ya no se puede cambiar.</p>
+              </>
+            )}
           </div>
           <div>
             <label className="etiqueta" htmlFor="direccion">

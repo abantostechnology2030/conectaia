@@ -49,6 +49,7 @@ hecho. Cada uno tiene su sección más abajo.
 | **Un botón se ve perfecto y al pulsarlo no pasa nada** | Un componente `'use client'` importa un módulo que arrastra Prisma | `lib/lados.ts` |
 | Un lado "apagado" se puede usar igual | Ocultar el enlace sin poner `vetoPorModo` en la API | `lib/modos.ts` |
 | Se vuelve a preguntar el lado a quien ya lo eligió | Preguntar en el login o el registro; se elige en la portada | `app/page.tsx` |
+| Una persona abre cuentas sin fin y cobra el regalo en todas | El `dni` sin índice único, o editable desde el perfil | `lib/dni.ts` |
 | Una cuenta ve medio menú y no tiene forma de arreglarlo | Leer un `modo` nulo o `'ambos'` sin `modoEfectivo()` | `lib/modos.ts` |
 | Entro por "necesito" y veo el panel de ofrecer | El `?lado=` se pierde entre login y registro | `lib/destino.ts` |
 | Entro por una puerta y sale el lado de la última vez | El login navega sin escribir el modo | `login/LoginForm.tsx` |
@@ -201,6 +202,50 @@ administrador esa llamada le devuelve 403 y es correcto — no participa en el m
 ⚠️ **Ninguna cuenta puede nacer sin lado.** Si `POST /api/registro` recibe un `modo` que no existe
 —o no recibe ninguno— `modoEfectivo()` guarda `busco`. Nacer en `null` dejaría media cuenta
 inservible, porque ya no hay ninguna pantalla que pregunte.
+
+### En el alta no hay ningún dato opcional
+`POST /api/registro` exige **nombres, apellidos, DNI, correo, celular, ciudad y contraseña**. El
+único que no se pide es el `modo`, y es a propósito: cuando no llega, `modoEfectivo()` guarda
+`busco`.
+
+⚠️ **El celular pasó de opcional a obligatorio, y no es un capricho de formulario:** es por donde se
+hablan las dos partes cuando alguien paga un desbloqueo. Una cuenta sin celular llega hasta el cobro
+y ahí se queda — el crédito gastado en un contacto al que no se puede escribir. En el perfil sí se
+puede cambiar.
+
+⚠️ **El `required` del formulario no protege nada por sí solo**: el alta se puede pedir desde la
+consola del navegador. Lo que vale son las comprobaciones de la ruta, y el flujo automatizado las
+verifica quitando **un campo cada vez**.
+
+### El DNI: obligatorio en el registro y único (lib/dni.ts)
+El alta pide **DNI de 8 dígitos** junto al nombre, y `Usuario.dni` tiene índice **único**.
+
+⚠️ **La unicidad es lo que sostiene "una persona, una cuenta", y no es cosmética:** cada cuenta
+nueva cobra `creditos_bienvenida`. Sin esa restricción, el regalo se cobra tantas veces como
+correos tenga alguien, y la palanca de la etapa de prueba se convierte en una fuga.
+
+- **`lib/dni.ts` no importa NADA de servidor**, por la misma razón que `lib/lados.ts`: lo usa el
+  formulario de registro, que es `'use client'`. Arrastrar Prisma ahí dejaría el formulario sin
+  hidratar y el botón dejaría de responder sin dar un solo error.
+- **Se guarda solo con los dígitos.** `normalizarDni()` quita espacios, puntos y guiones: la gente
+  lo escribe "12 345 678", y rechazarlo por eso es una barrera inventada.
+- **El correo y el DNI se comprueban en la MISMA consulta**, pero con mensajes distintos: un 409
+  que no dice cuál de los dos está repetido no le sirve al usuario para corregir nada.
+- **El índice único se atrapa igual (`P2002` → 409).** Dos altas a la vez pasan las dos la
+  comprobación previa; sin ese `catch`, la segunda saldría por el 500 genérico y el usuario leería
+  un error que no explica nada.
+- **En el perfil el DNI no se puede cambiar ni vaciar**, igual que el correo con el que se entra:
+  si se pudiera, la regla de arriba duraría lo que tarda alguien en abrir su perfil. El formulario
+  lo enseña como dato fijo, **y la API lo comprueba aparte** — si no, bastaría con mandar el campo
+  desde la consola del navegador.
+- **Las cuentas anteriores lo tienen vacío**, y por eso la columna sigue siendo opcional en la base
+  (SQLite admite varios `NULL` bajo un índice único). A ellas —y solo a ellas— el perfil sí les
+  ofrece el campo para completarlo. El administrador no tiene DNI y no le hace falta: no participa
+  en el marketplace.
+
+⚠️ **Cada guion de prueba que dé de alta cuentas tiene que mandar un DNI distinto**, como ya hace
+con los correos. Repetirlo hace fallar la segunda alta con un 409 que no tiene nada que ver con lo
+que se estaba probando.
 
 ⚠️ **`destinoSeguro()` no es decorativo.** Aunque la portada ya no genere `?destino=`, el login lo
 sigue aceptando. Sin esa validación, `/login?destino=https://otro-sitio` convertiría el login en un
@@ -412,7 +457,7 @@ Detectar una coincidencia no revela datos ni crea una contratación. Siempre dec
 ## Modelo de datos (Prisma)
 
 ```
-Usuario (rol: admin|usuario · creditos · estado)
+Usuario (rol: admin|usuario · dni único · creditos · estado)
   ├─ Necesidad ──── Foto[]      borrador|publicada|oferta_seleccionada|en_proceso|finalizada|cancelada
   ├─ Servicio  ──── Foto[]      borrador|publicado|pausado|desactivado
   ├─ Postulacion (@@unique necesidadId+usuarioId)  enviada|seleccionada|no_seleccionada|retirada
@@ -574,7 +619,7 @@ personas. El detalle va a `console.error`, no al navegador.
 
 | Ruta | Qué hace |
 |---|---|
-| `POST /api/registro` | Alta con su `modo` ya puesto (`busco` si no llega ninguno) + créditos de bienvenida como movimiento (no como valor inicial) |
+| `POST /api/registro` | Alta con **todos los datos obligatorios** (DNI único incluido) y su `modo` ya puesto (`busco` si no llega ninguno) + créditos de bienvenida como movimiento (no como valor inicial) |
 | `PATCH /api/perfil/modo` | Cambia de lado. Solo acepta `busco` u `ofrezco`; lo llaman el login, los botones del panel y el perfil |
 | `POST/PATCH/DELETE /api/necesidades[/[id]]` | CRUD; recalcula matching y `claves` |
 | `PATCH /api/necesidades/[id]/estado` | Transiciones válidas; al cancelar avisa a quienes ofertaron |
@@ -714,10 +759,10 @@ npm run build
 npm run db:push      # aplica el schema a SQLite
 npm run db:seed      # catálogo, paquetes, admin y las cuentas de demostración
 npm run db:reset     # borra lo transaccional y vuelve a sembrar
-npm run probar:aislado  # ✅ las 158 comprobaciones en su PROPIA base y puerto (3099).
+npm run probar:aislado  # ✅ las 181 comprobaciones en su PROPIA base y puerto (3099).
                         #    No toca prisma/dev.db. Es el que hay que usar para
                         #    verificar un cambio si alguien está probando a mano.
-npm run probar       # ⚠️ REINICIA LA BASE y corre las 168 comprobaciones de flujo
+npm run probar       # ⚠️ REINICIA LA BASE y corre las 181 comprobaciones de flujo
                      #    Borra las publicaciones de TODAS las cuentas, también
                      #    las creadas a mano. Se planta si detecta trabajo real;
                      #    para forzarlo: CONFIRMAR=si npm run probar
@@ -768,7 +813,7 @@ ella en cada pasada.
 ### ✅ La solución de verdad: `npm run probar:aislado`
 
 ```bash
-npm run probar:aislado    # las 158 comprobaciones SIN tocar prisma/dev.db
+npm run probar:aislado    # las 181 comprobaciones SIN tocar prisma/dev.db
 ```
 
 Levanta un **segundo servidor en el puerto 3099** apuntando a `prisma/test.db`, prepara esa base
@@ -811,7 +856,7 @@ Antes de buscar un borrado, comprobar el `modo` con `npx tsx scripts/ver-modos.t
 ## Comprobación automatizada
 
 `scripts/probar-flujo.mjs` recorre la app entera por HTTP con sesiones reales de NextAuth y
-comprueba **168** cosas que no se pueden verificar leyendo el código: quién paga, quién no paga,
+comprueba **181** cosas que no se pueden verificar leyendo el código: quién paga, quién no paga,
 qué se ve antes y después del desbloqueo, qué se bloquea y qué pasa cuando algo falla a mitad.
 
 Cubre: autenticación · antievasión (incluidos números escritos con letras) · publicación ·
@@ -837,7 +882,8 @@ reinicio SQLite no reutiliza los autoincrementos y la segunda pasada fallaría e
 - [x] Escaparate público (portada, buscador, fichas, perfiles)
 - [x] Elección del lado en la portada; login y registro generales, sin preguntar nada
 - [x] Dos lados y solo dos (`ambos` retirado), con los dos botones siempre al pie del panel
-- [x] `npm run build` y `npx eslint .` limpios · 168/168 comprobaciones de flujo
+- [x] Alta sin datos opcionales: DNI (único), celular, ciudad y lo demás, todo obligatorio
+- [x] `npm run build` y `npx eslint .` limpios · 181/181 comprobaciones de flujo
 
 ### Fuera del MVP a propósito (PDR §47)
 App móvil nativa, chat interno, pasarela de pago automática, GPS, mapas, IA generativa,

@@ -95,6 +95,13 @@ const form = (obj) => {
   return f
 }
 
+/**
+ * Un DNI distinto en cada alta: el campo es único, así que repetirlo haría
+ * fallar la segunda cuenta con un 409 que no tiene nada que ver con lo que se
+ * está probando. Es el mismo motivo por el que los correos llevan `Date.now()`.
+ */
+const dniPrueba = () => String(Math.floor(10000000 + Math.random() * 90000000))
+
 const jsonBody = (obj) => ({
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -295,7 +302,9 @@ async function main() {
       nombres: 'Prueba',
       apellidos: 'Regalo',
       email: correo,
+      dni: dniPrueba(),
       password: 'demo123',
+      celular: '987000111',
       ciudad: 'Cajamarca',
       modo: 'busco',
     }))
@@ -623,10 +632,14 @@ async function main() {
   // Rosa se registra desde cero: de paso se prueba el alta y los créditos de
   // bienvenida, que son justo lo que necesita para pagar un desbloqueo.
   const rosa = crearSesion()
+  const dniRosa = dniPrueba()
   const alta = await rosa.json('/api/registro', jsonBody({
     nombres: 'Rosa',
     apellidos: 'Huamán',
     email: `rosa+${Date.now()}@conectaia.com`,
+    // Escrito con espacios a propósito: es como lo teclea la gente, y el
+    // registro tiene que guardarlo en dígitos en vez de rechazarlo.
+    dni: `${dniRosa.slice(0, 2)} ${dniRosa.slice(2, 5)} ${dniRosa.slice(5)}`,
     password: 'demo123',
     celular: '987555666',
     ciudad: 'Cajamarca',
@@ -638,12 +651,77 @@ async function main() {
 
   const rosaBd = await prisma.usuario.findUnique({
     where: { id: alta.datos.id },
-    select: { email: true, modo: true },
+    select: { email: true, modo: true, dni: true },
   })
   ok(rosaBd.modo === 'busco', 'La cuenta nace con el lado que eligió al registrarse')
+  ok(rosaBd.dni === dniRosa, 'El DNI se guarda solo con los dígitos', `guardado: ${rosaBd.dni}`)
+
+  // El DNI es obligatorio y único. Lo segundo es lo que sostiene "una persona,
+  // una cuenta": sin ello, los créditos de bienvenida se cobran tantas veces
+  // como correos tenga alguien.
+  // TODOS los datos del alta son obligatorios, y se comprueba quitando uno cada
+  // vez: el `required` del formulario no protege nada: la llamada se puede
+  // hacer desde la consola del navegador. `modo` queda fuera a propósito —
+  // cuando no llega, `modoEfectivo()` guarda `busco`, que es lo correcto.
+  const altaCompleta = () => ({
+    nombres: 'Prueba',
+    apellidos: 'Obligatorio',
+    email: `prueba+oblig${Date.now()}${Math.random().toString(36).slice(2, 5)}@conectaia.com`,
+    dni: dniPrueba(),
+    password: 'demo123',
+    celular: '987000222',
+    ciudad: 'Cajamarca',
+    modo: 'busco',
+  })
+  for (const campo of ['nombres', 'apellidos', 'email', 'dni', 'password', 'celular', 'ciudad']) {
+    const cuerpo = altaCompleta()
+    delete cuerpo[campo]
+    const r = await crearSesion().json('/api/registro', jsonBody(cuerpo))
+    ok(r.estado === 400, `Sin ${campo} no se crea la cuenta`, JSON.stringify(r.datos))
+  }
+
+  const dniCorto = await crearSesion().json('/api/registro', jsonBody({
+    nombres: 'Corto', apellidos: 'Dni',
+    email: `prueba+cortodni${Date.now()}@conectaia.com`,
+    dni: '1234', password: 'demo123', celular: '987000222', ciudad: 'Cajamarca', modo: 'busco',
+  }))
+  ok(dniCorto.estado === 400, 'Un DNI que no tiene 8 dígitos se rechaza')
+
+  const dniRepetido = await crearSesion().json('/api/registro', jsonBody({
+    nombres: 'Copia', apellidos: 'De Rosa',
+    email: `prueba+repedni${Date.now()}@conectaia.com`,
+    dni: dniRosa, password: 'demo123', celular: '987000222', ciudad: 'Cajamarca', modo: 'busco',
+  }))
+  ok(dniRepetido.estado === 409, 'El DNI de Rosa no sirve para una segunda cuenta')
+  ok(
+    String(dniRepetido.datos.error ?? '').includes('DNI'),
+    'Y el mensaje dice que el problema es el DNI, no el correo',
+    JSON.stringify(dniRepetido.datos),
+  )
 
   const rRosa = await rosa.entrar(rosaBd.email, 'demo123')
   ok(rRosa.entro, 'Rosa entra con su cuenta recién creada')
+
+  // Editar el perfil NO puede cambiar ni vaciar el DNI: es lo que hace que la
+  // regla de arriba valga algo más que un rato. Los demás datos se mandan tal
+  // como los tiene, porque el perfil guarda el formulario entero.
+  const intentoDni = await rosa.pedir('/api/perfil', {
+    method: 'PATCH',
+    body: form({
+      nombres: 'Rosa',
+      apellidos: 'Huamán',
+      ciudad: 'Cajamarca',
+      celular: '987555666',
+      whatsapp: '987555666',
+      dni: '99999999',
+    }),
+  })
+  ok(intentoDni.status === 200, 'Rosa guarda su perfil')
+  const dniTrasEditar = await prisma.usuario.findUnique({
+    where: { id: alta.datos.id },
+    select: { dni: true },
+  })
+  ok(dniTrasEditar.dni === dniRosa, 'El perfil no cambia el DNI ya registrado', `quedó: ${dniTrasEditar.dni}`)
 
   // Ya eligió al registrarse, así que entrar no le pregunta nada más.
   const alPanel = await rosa.pedir('/panel')
@@ -777,6 +855,7 @@ async function main() {
     nombres: 'Diana',
     apellidos: 'Vásquez',
     email: `diana+${Date.now()}@conectaia.com`,
+    dni: dniPrueba(),
     password: 'demo123',
     celular: '987444555',
     ciudad: 'Cajamarca',
@@ -1077,6 +1156,7 @@ async function main() {
     nombres: 'Diego',
     apellidos: 'Salazar',
     email: `diego+${Date.now()}@conectaia.com`,
+    dni: dniPrueba(),
     password: 'demo123',
     celular: '987666777',
     ciudad: 'Cajamarca',

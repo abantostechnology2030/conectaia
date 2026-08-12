@@ -26,7 +26,14 @@ model Usuario {
   nombres   String
   apellidos String
 
-  dni         String?
+  // Documento de identidad, 8 dígitos. Se pide en el registro y es ÚNICO: una
+  // persona, una cuenta. Sin eso, los créditos de bienvenida se cobran tantas
+  // veces como correos tenga alguien.
+  //
+  // Sigue siendo opcional en la base por las cuentas que nacieron antes de
+  // pedirlo (y por el administrador, que no participa en el marketplace):
+  // SQLite admite varios NULL bajo un índice único.
+  dni         String? @unique
   // Datos de contacto: NO se muestran hasta que alguien paga el desbloqueo.
   celular     String?
   whatsapp    String?

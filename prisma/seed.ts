@@ -98,12 +98,15 @@ async function main() {
   // inicial y el flujo automatizado mide siempre lo mismo.
   const maria = await prisma.usuario.upsert({
     where: { email: 'maria@conectaia.com' },
-    update: { creditos: 3, modo: 'busco' },
+    // El DNI también se repone: desde que el registro lo pide, una cuenta de
+    // demostración sin DNI no se parece a las que crea la gente.
+    update: { creditos: 3, modo: 'busco', dni: '40111222' },
     create: {
       email: 'maria@conectaia.com',
       password: demoClave,
       nombres: 'María',
       apellidos: 'Quispe',
+      dni: '40111222',
       celular: '987111222',
       whatsapp: '987111222',
       ciudad: 'Cajamarca',
@@ -119,12 +122,13 @@ async function main() {
 
   const carlos = await prisma.usuario.upsert({
     where: { email: 'carlos@conectaia.com' },
-    update: { creditos: 3, modo: 'ofrezco' },
+    update: { creditos: 3, modo: 'ofrezco', dni: '40333444' },
     create: {
       email: 'carlos@conectaia.com',
       password: demoClave,
       nombres: 'Carlos',
       apellidos: 'Pérez',
+      dni: '40333444',
       celular: '987333444',
       whatsapp: '987333444',
       ciudad: 'Cajamarca',

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import type { Modo } from '@/lib/lados'
+import { DNI_DIGITOS } from '@/lib/dni'
 
 /**
  * Alta de cuenta.
@@ -55,6 +56,13 @@ export default function RegistroForm({ lado }: { lado?: Modo }) {
 
   return (
     <form onSubmit={enviar} className="mt-5 space-y-4">
+      {/*
+        Todos los campos son obligatorios, así que se dice una vez arriba en vez
+        de poner un asterisco en cada uno: siete asteriscos seguidos no informan
+        de nada y ensucian el formulario.
+      */}
+      <p className="text-sm text-slate-500">Todos los datos son obligatorios.</p>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="etiqueta" htmlFor="nombres">
@@ -87,25 +95,42 @@ export default function RegistroForm({ lado }: { lado?: Modo }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
+          <label className="etiqueta" htmlFor="dni">
+            DNI
+          </label>
+          <input
+            id="dni"
+            name="dni"
+            required
+            inputMode="numeric"
+            maxLength={DNI_DIGITOS}
+            className="campo"
+            placeholder="12345678"
+          />
+          <p className="ayuda">Nadie lo ve. Sirve para que cada persona tenga una sola cuenta.</p>
+        </div>
+        <div>
           <label className="etiqueta" htmlFor="celular">
             Celular
           </label>
           <input
             id="celular"
             name="celular"
+            required
             inputMode="numeric"
             className="campo"
             placeholder="987654321"
           />
           <p className="ayuda">Nadie lo ve hasta que decidas conectar con alguien.</p>
         </div>
-        <div>
-          <label className="etiqueta" htmlFor="ciudad">
-            Ciudad
-          </label>
-          <input id="ciudad" name="ciudad" required className="campo" placeholder="Cajamarca" />
-          <p className="ayuda">Se usa para encontrarte trabajos cerca.</p>
-        </div>
+      </div>
+
+      <div>
+        <label className="etiqueta" htmlFor="ciudad">
+          Ciudad
+        </label>
+        <input id="ciudad" name="ciudad" required className="campo" placeholder="Cajamarca" />
+        <p className="ayuda">Se usa para encontrarte trabajos cerca.</p>
       </div>
 
       <div>
