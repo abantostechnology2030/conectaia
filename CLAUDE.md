@@ -814,8 +814,20 @@ reinicio SQLite no reutiliza los autoincrementos y la segunda pasada fallaría e
 App móvil nativa, chat interno, pasarela de pago automática, GPS, mapas, IA generativa,
 videollamadas, suscripciones y sistema de disputas.
 
-### Pendiente antes de producción
-- No hay `git init` en el proyecto todavía.
-- Falta `ecosystem.config.cjs` y la configuración de Nginx para el despliegue.
-- `AUTH_SECRET` en `.env` es el de desarrollo: **cambiarlo** en el servidor.
-- Las imágenes se guardan en `public/uploads/`; incluirlo en las copias de seguridad.
+### Despliegue
+Todo lo necesario está en ****: repositorio, PM2, Nginx, certificado y copias.
+
+- Repositorio:  · dominio
+  **www.conectaia.solucionesctec.com** · puerto interno **3003** (el mismo que en local).
+-  (PM2, **una sola instancia** — SQLite es un archivo) y
+  .
+-  — sin esto el servidor no compila:  no está
+  en el repositorio.
+
+⚠️ **Pendiente en el servidor, y no es opcional:**
+- ** nuevo**, generado allí. Con el de desarrollo, quien lo conozca puede fabricarse
+  una sesión válida en producción.
+- **Cambiar la contraseña del administrador** y borrar las cuentas de demostración: están en este
+  repositorio, así que son públicas.
+- **Copias de  Y de **. Las fotos no están en git a propósito
+  (son datos de usuarios): respaldar solo la base deja las publicaciones con imágenes rotas.
