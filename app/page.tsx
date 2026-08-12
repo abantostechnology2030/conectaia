@@ -6,6 +6,7 @@ import { Icono } from '@/components/Icono'
 import { soles } from '@/lib/fechas'
 import { INICIO } from '@/lib/roles'
 import { puerta } from '@/lib/destino'
+import { getConfig, aNumero, esSi } from '@/lib/config'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,18 @@ export default async function Portada() {
   // marketplace, y `INICIO` ya lo deja en su propio panel.
   const irBusco = puerta('busco', haySesion, panel ?? '/panel')
   const irOfrezco = puerta('ofrezco', haySesion, panel ?? '/panel')
+
+  // El regalo de bienvenida se ANUNCIA con el número que el admin tenga puesto,
+  // nunca con uno escrito a mano aquí: en `/admin/configuracion` se cambia sin
+  // desplegar, y un cartel que prometa 5 cuando la configuración da 1 es una
+  // promesa incumplida en la primera pantalla que ve la gente.
+  const cfg = await getConfig()
+  const regalo = aNumero(cfg.creditos_bienvenida, 0)
+  const registroAbierto = esSi(cfg.registro_abierto)
+  // Cuántos contactos salen del regalo. El costo por desbloqueo TAMBIÉN es
+  // configurable, así que dividir es lo único que no miente: dar por hecho que
+  // vale 1 es el mismo error que escribir el regalo a mano.
+  const contactosDeRegalo = Math.floor(regalo / Math.max(1, aNumero(cfg.costo_desbloqueo, 1)))
 
   const [necesidades, servicios, categorias, ultimas] = await Promise.all([
     prisma.necesidad.count({ where: { estado: 'publicada' } }),
@@ -125,6 +138,35 @@ export default async function Portada() {
               Publica lo que necesitas y recibe ofertas. O publica lo que sabes hacer y encuentra
               oportunidades. Con una sola cuenta puedes hacer las dos cosas.
             </p>
+
+            {/* El regalo de bienvenida, destacado y justo encima de las dos
+                puertas: es donde se decide entrar, no al final de la página.
+
+                Solo se enseña si de verdad hay regalo (`regalo > 0`) y si se
+                puede crear cuenta (`registroAbierto`). Con el registro cerrado
+                o el regalo en 0 sería una promesa que la aplicación no cumple.
+
+                A quien ya tiene sesión no se le enseña: no puede volver a
+                crearse una cuenta, y el regalo ya lo recibió. */}
+            {!haySesion && registroAbierto && regalo > 0 && (
+              <Link
+                href="/registro"
+                className="elevar mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl border-2 border-verde-400 bg-verde-50 px-5 py-4 text-center"
+              >
+                <span className="text-2xl" aria-hidden="true">
+                  🎁
+                </span>
+                <span className="text-base font-extrabold text-verde-700 sm:text-lg">
+                  Crea tu cuenta y recibe {regalo} crédito{regalo === 1 ? '' : 's'} gratis
+                </span>
+                {contactosDeRegalo > 0 && (
+                  <span className="text-sm font-semibold text-slate-600">
+                    — te alcanzan para contactar a {contactosDeRegalo} profesional
+                    {contactosDeRegalo === 1 ? '' : 'es'}, sin pagar nada
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Las dos puertas, con el color que las acompaña en toda la app:
                 cielo = lo que busco, menta = lo que ofrezco. Ese significado NO

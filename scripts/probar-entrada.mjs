@@ -116,6 +116,56 @@ ok(portada.includes('/login?lado=busco'), '"Busco un servicio" lleva al login co
 ok(portada.includes('/login?lado=ofrezco'), '"Ofrezco un servicio" lleva al login con su lado')
 ok(!portada.includes('/registro?intencion='), 'Ya no manda a elegir el lado en el registro')
 
+console.log('\n1b. El cartel del regalo dice la VERDAD')
+// El número sale de `/admin/configuracion`, no está escrito en el HTML: se
+// cambia sin desplegar, y prometer 5 cuando la configuración da 1 sería una
+// promesa incumplida en la primera pantalla que ve la gente.
+{
+  const admin = sesion()
+  const { csrfToken } = await (await admin.pedir('/api/auth/csrf')).json()
+  await admin.pedir('/api/auth/callback/credentials', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      email: 'admin@conectaia.com',
+      password: 'admin123',
+      csrfToken,
+      callbackUrl: `${BASE}/`,
+    }),
+  })
+  const ajustar = (o) =>
+    admin.pedir('/api/admin/configuracion', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(o),
+    })
+  const home = async () => limpiar(await (await fetch(`${BASE}/`)).text())
+
+  await ajustar({ creditos_bienvenida: '5', costo_desbloqueo: '1', registro_abierto: '1' })
+  const con5 = await home()
+  ok(con5.includes('recibe 5 créditos gratis'), 'Con 5 configurados, el cartel anuncia 5')
+  ok(con5.includes('contactar a 5 profesionales'), 'Y calcula a cuántos se puede contactar')
+
+  await ajustar({ creditos_bienvenida: '1' })
+  ok((await home()).includes('recibe 1 crédito gratis'), 'Con 1 lo dice en singular')
+
+  // Los dos casos en que el cartel sería una promesa que la app no cumple.
+  await ajustar({ creditos_bienvenida: '0' })
+  ok(!(await home()).includes('gratis'), 'Con el regalo en 0 NO se anuncia nada')
+
+  await ajustar({ creditos_bienvenida: '5', registro_abierto: '0' })
+  ok(!(await home()).includes('gratis'), 'Con el registro cerrado tampoco')
+
+  // El costo por desbloqueo también es configurable: 5 créditos a 2 = 2 contactos.
+  await ajustar({ registro_abierto: '1', costo_desbloqueo: '2' })
+  ok(
+    (await home()).includes('contactar a 2 profesionales'),
+    'El resumen divide por el costo real del desbloqueo',
+  )
+
+  await ajustar({ creditos_bienvenida: '5', costo_desbloqueo: '1' })
+}
+
 console.log('\n2. El login es UNO solo y no pregunta el lado')
 const loginBusco = limpiar(await (await fetch(`${BASE}/login?lado=busco`)).text())
 const loginOfrezco = limpiar(await (await fetch(`${BASE}/login?lado=ofrezco`)).text())

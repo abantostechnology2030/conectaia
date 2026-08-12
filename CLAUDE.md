@@ -498,6 +498,19 @@ regala nada.
 ⚠️ **Estaba en la sección "Plataforma" y no se encontraba**: quien busca un ajuste de créditos mira
 en la sección de créditos. Se movió por eso.
 
+### El cartel de la portada lo ANUNCIA, y lee el número de verdad
+La portada enseña «Crea tu cuenta y recibe N créditos gratis» encima de las dos puertas, que es
+donde se decide entrar.
+
+⚠️ **El número NO está escrito en el HTML.** Sale de `creditos_bienvenida`, que se cambia desde el
+admin sin desplegar: un cartel que prometa 5 cuando la configuración da 1 es una promesa incumplida
+en la primera pantalla que ve la gente. Lo mismo con «te alcanzan para N profesionales», que divide
+por `costo_desbloqueo` en vez de dar por hecho que vale 1.
+
+**No se enseña** si el regalo es 0, si el registro está cerrado, o si ya hay sesión — en los tres
+casos sería una promesa que la aplicación no puede cumplir. Los seis casos están en
+`scripts/probar-entrada.mjs`.
+
 ## Antievasión (lib/antievasion.ts + lib/moderacion.ts)
 
 Cuatro reglas sobre cada texto público: teléfono, correo, redes sociales y frases de salida de la
