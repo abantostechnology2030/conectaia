@@ -84,18 +84,21 @@ export default function ConfiguracionForm({ cfg }: { cfg: Cfg }) {
           valor={valores.registro_abierto}
           alCambiar={set}
         />
+      </div>
+
+      {/* "Créditos de bienvenida" estaba aquí arriba, en "Plataforma", y por eso
+          no se encontraba: quien busca un ajuste de créditos mira en la sección
+          de créditos. Los dos números que gobiernan la economía van juntos. */}
+      <div className="tarjeta space-y-4">
+        <h2 className="font-bold text-slate-700">Créditos</h2>
 
         <Numero
           clave="creditos_bienvenida"
-          etiqueta="Créditos de bienvenida"
-          ayuda="Los que se regalan al crear una cuenta. Pon 0 para no regalar ninguno."
+          etiqueta="Créditos de regalo al crear una cuenta"
+          ayuda="Lo que recibe cada usuario nuevo, sin pagar. Súbelo durante la etapa de prueba para que la gente pueda contactar sin recargar; ponlo en 0 para no regalar ninguno. Solo afecta a las cuentas que se creen DESPUÉS del cambio."
           valor={valores.creditos_bienvenida}
           alCambiar={set}
         />
-      </div>
-
-      <div className="tarjeta space-y-4">
-        <h2 className="font-bold text-slate-700">Créditos</h2>
 
         <Numero
           clave="costo_desbloqueo"
@@ -104,6 +107,19 @@ export default function ConfiguracionForm({ cfg }: { cfg: Cfg }) {
           valor={valores.costo_desbloqueo}
           alCambiar={set}
         />
+
+        <p className="rounded-xl border border-marca-200 bg-marca-50 px-4 py-3 text-sm text-marca-800">
+          Con <strong>{valores.creditos_bienvenida || '0'}</strong> de regalo y{' '}
+          <strong>{valores.costo_desbloqueo || '1'}</strong> por desbloqueo, cada usuario nuevo
+          puede abrir{' '}
+          <strong>
+            {Math.floor(
+              (Number(valores.creditos_bienvenida) || 0) /
+                Math.max(1, Number(valores.costo_desbloqueo) || 1),
+            )}
+          </strong>{' '}
+          contacto(s) antes de tener que recargar.
+        </p>
       </div>
 
       <div className="tarjeta space-y-4">

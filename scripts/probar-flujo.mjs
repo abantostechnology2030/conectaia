@@ -274,6 +274,51 @@ async function main() {
   )
 
   // =========================================================================
+  console.log('\n3a. Los créditos de regalo los decide el administrador')
+
+  // Es la palanca de la etapa de prueba: con más créditos de regalo, la gente
+  // puede contactar sin recargar. Se comprueba que el número que pone el admin
+  // es EXACTAMENTE el que recibe la cuenta nueva, y que entra como movimiento
+  // —no escribiendo el saldo a mano—, o el histórico dejaría de cuadrar.
+  const ponerRegalo = (n) =>
+    admin.json('/api/admin/configuracion', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ creditos_bienvenida: String(n) }),
+    })
+
+  for (const cuantos of [7, 0]) {
+    ok((await ponerRegalo(cuantos)).estado === 200, `El admin pone ${cuantos} créditos de regalo`)
+
+    const correo = `regalo+${Date.now()}${Math.random().toString(36).slice(2, 5)}@conectaia.com`
+    const alta = await crearSesion().json('/api/registro', jsonBody({
+      nombres: 'Prueba',
+      apellidos: 'Regalo',
+      email: correo,
+      password: 'demo123',
+      ciudad: 'Cajamarca',
+      modo: 'busco',
+    }))
+    const nuevo = await prisma.usuario.findUnique({
+      where: { id: alta.datos.id },
+      select: { creditos: true, movimientos: { select: { tipo: true, cantidad: true } } },
+    })
+    ok(nuevo.creditos === cuantos, `La cuenta nueva recibe exactamente ${cuantos} (${nuevo.creditos})`)
+    ok(
+      cuantos === 0
+        ? nuevo.movimientos.length === 0
+        : nuevo.movimientos.length === 1 && nuevo.movimientos[0].cantidad === cuantos,
+      cuantos === 0
+        ? 'Con 0 no se inventa ningún movimiento'
+        : 'Y entra como movimiento, así el histórico cuadra con el saldo',
+    )
+    await prisma.usuario.delete({ where: { id: alta.datos.id } })
+  }
+
+  // Se deja como estaba para no alterar los pasos siguientes.
+  await ponerRegalo(1)
+
+  // =========================================================================
   console.log('\n3b. Rechazo, badges y el agujero de editar lo ya aprobado')
 
   const paraRechazar = await maria.json('/api/necesidades', {

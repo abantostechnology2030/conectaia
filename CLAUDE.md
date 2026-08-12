@@ -482,6 +482,22 @@ Solo entra lo **publicado**: un borrador o un servicio pausado no le aparece a n
 Comprobación: `npx tsx scripts/probar-match-pdr.ts` reproduce el ejemplo del PDR §45
 (pintura + Cajamarca + S/100 vs "desde S/80", Carlos con ⭐4.8) y da exactamente **94%**.
 
+## Créditos de regalo: la palanca de la etapa de prueba
+
+`creditos_bienvenida` en `/admin/configuracion` -> **Créditos**. Lo que recibe cada cuenta nueva
+sin pagar. En la etapa de prueba se sube para que la gente pueda contactar sin recargar; en 0 no se
+regala nada.
+
+- Entra por `mover()` como `ajuste`, **nunca escribiendo el saldo** (regla 3): así el histórico
+  cuadra y el regalo es auditable como cualquier otro movimiento.
+- Solo afecta a las cuentas creadas **después** del cambio. A las que ya existen se les ajusta a
+  mano desde `/admin/usuarios`.
+- La pantalla calcula y enseña **cuántos contactos puede abrir** un usuario nuevo con el regalo y
+  el costo por desbloqueo. Son los dos números que gobiernan la economía y por eso van juntos.
+
+⚠️ **Estaba en la sección "Plataforma" y no se encontraba**: quien busca un ajuste de créditos mira
+en la sección de créditos. Se movió por eso.
+
 ## Antievasión (lib/antievasion.ts + lib/moderacion.ts)
 
 Cuatro reglas sobre cada texto público: teléfono, correo, redes sociales y frases de salida de la
@@ -688,7 +704,7 @@ npm run db:reset     # borra lo transaccional y vuelve a sembrar
 npm run probar:aislado  # ✅ las 158 comprobaciones en su PROPIA base y puerto (3099).
                         #    No toca prisma/dev.db. Es el que hay que usar para
                         #    verificar un cambio si alguien está probando a mano.
-npm run probar       # ⚠️ REINICIA LA BASE y corre las 162 comprobaciones de flujo
+npm run probar       # ⚠️ REINICIA LA BASE y corre las 168 comprobaciones de flujo
                      #    Borra las publicaciones de TODAS las cuentas, también
                      #    las creadas a mano. Se planta si detecta trabajo real;
                      #    para forzarlo: CONFIRMAR=si npm run probar
@@ -782,7 +798,7 @@ Antes de buscar un borrado, comprobar el `modo` con `npx tsx scripts/ver-modos.t
 ## Comprobación automatizada
 
 `scripts/probar-flujo.mjs` recorre la app entera por HTTP con sesiones reales de NextAuth y
-comprueba **162** cosas que no se pueden verificar leyendo el código: quién paga, quién no paga,
+comprueba **168** cosas que no se pueden verificar leyendo el código: quién paga, quién no paga,
 qué se ve antes y después del desbloqueo, qué se bloquea y qué pasa cuando algo falla a mitad.
 
 Cubre: autenticación · antievasión (incluidos números escritos con letras) · publicación ·
@@ -808,7 +824,7 @@ reinicio SQLite no reutiliza los autoincrementos y la segunda pasada fallaría e
 - [x] Escaparate público (portada, buscador, fichas, perfiles)
 - [x] Elección del lado en la portada; login y registro generales, sin preguntar nada
 - [x] Dos lados y solo dos (`ambos` retirado), con los dos botones siempre al pie del panel
-- [x] `npm run build` y `npx eslint .` limpios · 162/162 comprobaciones de flujo
+- [x] `npm run build` y `npx eslint .` limpios · 168/168 comprobaciones de flujo
 
 ### Fuera del MVP a propósito (PDR §47)
 App móvil nativa, chat interno, pasarela de pago automática, GPS, mapas, IA generativa,
