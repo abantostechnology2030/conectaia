@@ -815,19 +815,23 @@ App móvil nativa, chat interno, pasarela de pago automática, GPS, mapas, IA ge
 videollamadas, suscripciones y sistema de disputas.
 
 ### Despliegue
-Todo lo necesario está en ****: repositorio, PM2, Nginx, certificado y copias.
+El paso a paso está en **`DESPLIEGUE.md`**: repositorio, PM2, Nginx, certificado y copias.
 
-- Repositorio:  · dominio
-  **www.conectaia.solucionesctec.com** · puerto interno **3003** (el mismo que en local).
--  (PM2, **una sola instancia** — SQLite es un archivo) y
-  .
--  — sin esto el servidor no compila:  no está
-  en el repositorio.
+- Repositorio `git@github.com:abantostechnology2030/conectaia.git` · dominio
+  **www.conectaia.solucionesctec.com** · puerto interno **3003**, el mismo que en local.
+- `ecosystem.config.cjs` (PM2, **una sola instancia**: SQLite es un archivo y dos procesos
+  escribiendo a la vez se pisan) y `despliegue/nginx-conectaia.conf`.
+- `postinstall: prisma generate` — **sin esto el servidor no compila**, porque `app/generated` no
+  está en el repositorio.
+
+⚠️ **Las cabeceras `X-Forwarded-*` del Nginx no son opcionales.** Con `trustHost: true`, NextAuth
+reconstruye la URL con lo que le llegue: sin `X-Forwarded-Proto https` cree que está en http, marca
+la cookie como insegura y el navegador la rechaza. El login "funciona" y acto seguido estás fuera.
 
 ⚠️ **Pendiente en el servidor, y no es opcional:**
-- ** nuevo**, generado allí. Con el de desarrollo, quien lo conozca puede fabricarse
-  una sesión válida en producción.
-- **Cambiar la contraseña del administrador** y borrar las cuentas de demostración: están en este
-  repositorio, así que son públicas.
-- **Copias de  Y de **. Las fotos no están en git a propósito
-  (son datos de usuarios): respaldar solo la base deja las publicaciones con imágenes rotas.
+- **`AUTH_SECRET` nuevo**, generado allí (`openssl rand -base64 32`). Con el de desarrollo,
+  cualquiera que lo conozca puede fabricarse una sesión válida en producción.
+- **Cambiar la contraseña del administrador** y borrar las cuentas de demostración: `admin123` y
+  `demo123` están en este repositorio, así que son públicas.
+- **Copiar `prisma/dev.db` Y `public/uploads/`.** Las fotos no están en git a propósito (son datos
+  de usuarios): respaldar solo la base deja las publicaciones con las imágenes rotas.
