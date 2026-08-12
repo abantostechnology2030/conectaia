@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   ConectaIA — paleta
+   La marca es un azul-índigo de confianza. Los dos lados del marketplace
+   tienen color propio y se respetan en TODA la app, porque es lo que orienta
+   al usuario cuando la misma cuenta hace las dos cosas (PDR §46):
+     · busco  (necesidades) -> cielo
+     · ofrezco (servicios)  -> menta
+   `sol` marca lo que está a la espera y `durazno` las oportunidades.
+--------------------------------------------------------------------------- */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-marca-50: #eef2ff;
+  --color-marca-100: #e0e7ff;
+  --color-marca-200: #c7d2fe;
+  --color-marca-300: #a5b4fc;
+  --color-marca-400: #818cf8;
+  --color-marca-500: #6366f1;
+  --color-marca-600: #4f46e5;
+  --color-marca-700: #4338ca;
+  --color-marca-800: #3730a3;
+  --color-marca-900: #312e81;
+
+  --color-cielo-50: #eff9ff;
+  --color-cielo-100: #dcf0fd;
+  --color-cielo-300: #93cdf4;
+  --color-cielo-500: #38a3e0;
+  --color-cielo-700: #1e6fa5;
+
+  --color-menta-50: #edfbf5;
+  --color-menta-100: #d3f5e7;
+  --color-menta-300: #86dfbe;
+  --color-menta-500: #2fbd8c;
+  --color-menta-700: #1c8464;
+
+  --color-sol-50: #fffaeb;
+  --color-sol-100: #fff2cc;
+  --color-sol-300: #ffdd85;
+  --color-sol-500: #f0b429;
+  --color-sol-700: #b07d10;
+
+  --color-durazno-50: #fff5f1;
+  --color-durazno-100: #ffe6de;
+  --color-durazno-300: #ffb9a5;
+  --color-durazno-500: #ff8055;
+  --color-durazno-700: #cc5730;
+
+  /* Colores tomados del logotipo con `node scripts/colores-logo.mjs`, no "a
+     ojo": el azul marino es el del nombre "Conecta" y el verde el de "IA".
+     Se usan en el pie de página y en cualquier superficie de marca, para que
+     no haya dos azules distintos conviviendo en la misma pantalla. */
+  --color-logo-azul: #032c5b;
+  --color-logo-azul-claro: #0256ba;
+  --color-logo-verde: #66aa11;
+
+  /* Escalas completas de esos dos colores, para poder usarlos como fondo,
+     borde y texto sin inventarse tonos por el camino.
+     · `marino` es el azul del nombre "Conecta" (900) y su versión clara (600).
+     · `verde` es el de "IA".
+     Son los colores de la MARCA y viven en la cara pública (portada, pie). No
+     sustituyen a los colores con significado de dentro de la aplicación
+     —cielo=necesito, menta=ofrezco, durazno=oportunidades, sol=a la espera,
+     marca=plataforma y créditos—, que siguen queriendo decir lo mismo. */
+  --color-marino-50: #f0f6fd;
+  --color-marino-100: #dceafb;
+  --color-marino-200: #bcd7f7;
+  --color-marino-300: #8dbcf0;
+  --color-marino-400: #559ae5;
+  --color-marino-500: #2f7ed4;
+  --color-marino-600: #0256ba;
+  --color-marino-700: #084a94;
+  --color-marino-800: #0b3d76;
+  --color-marino-900: #032c5b;
+
+  --color-verde-50: #f5fbe9;
+  --color-verde-100: #e8f5cd;
+  --color-verde-200: #d3eba1;
+  --color-verde-300: #b6dc6b;
+  --color-verde-400: #98c93c;
+  --color-verde-500: #7bb31d;
+  --color-verde-600: #66aa11;
+  --color-verde-700: #4d800f;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+/* Superficies -------------------------------------------------------------- */
+@utility tarjeta {
+  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+}
+
+@utility tarjeta-suave {
+  @apply rounded-2xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+}
+
+/* Para bloques que no usan las utilidades de tarjeta pero deben elevarse igual. */
+@utility elevar {
+  @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+}
+
+/* Botones ------------------------------------------------------------------ */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primario {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply bg-marca-600 text-white hover:bg-marca-700;
+}
+@utility btn-secundario {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+}
+/* El azul del propio logotipo. Es el botón de la cara PÚBLICA (portada): ahí
+   manda la marca, no los colores con significado de dentro de la aplicación. */
+@utility btn-marino {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply bg-marino-700 text-white hover:bg-marino-900;
+}
+@utility btn-cielo {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply bg-cielo-500 text-white hover:bg-cielo-700;
+}
+@utility btn-menta {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply bg-menta-500 text-white hover:bg-menta-700;
+}
+@utility btn-peligro {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100;
+}
+
+/* Formularios -------------------------------------------------------------- */
+@utility campo {
+  @apply w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-marca-400 focus:ring-4 focus:ring-marca-100;
+}
+@utility etiqueta {
+  @apply mb-1.5 block text-sm font-semibold text-slate-700;
+}
+@utility ayuda {
+  @apply mt-1 text-xs text-slate-500;
+}
+
+/* Chips -------------------------------------------------------------------- */
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold;
+}
+
+/* Datos ocultos tras el muro de créditos (PDR §23) -------------------------- */
+@utility oculto-credito {
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2 py-1 font-mono text-sm tracking-widest text-slate-400 select-none;
+}
+
+/* Scroll horizontal contenido --------------------------------------------- */
+@utility scroll-x {
+  @apply -mx-1 overflow-x-auto px-1;
+}
+
+/* Tablas ------------------------------------------------------------------- */
+@layer components {
+  .tabla {
+    @apply w-full border-collapse text-sm;
+  }
+  .tabla thead th {
+    @apply border-b border-slate-200 px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500;
+  }
+  .tabla tbody td {
+    @apply border-b border-slate-100 px-3 py-2.5 align-middle text-slate-700;
+  }
+  .tabla tbody tr:hover {
+    @apply bg-slate-50;
+  }
+}
+
+/* Animación de entrada de los diálogos ------------------------------------- */
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.aparece {
+  animation: aparecer 0.16s ease-out;
+}
+
+/* Recorte de texto a N líneas en las tarjetas ------------------------------ */
+@utility lineas-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@utility lineas-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

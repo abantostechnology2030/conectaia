@@ -1,0 +1,40 @@
+# dependencias
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# producción
+/build
+
+# varios
+.DS_Store
+*.pem
+tsconfig.tsbuildinfo
+
+# depuración
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# entorno
+.env
+.env*.local
+
+# base de datos y subidas
+/prisma/dev.db
+/prisma/dev.db-journal
+/prisma/*.db
+/backups
+/public/uploads
+
+# cliente generado por Prisma
+/app/generated
+
+# Copias de seguridad de la base que hace scripts/reiniciar.ts
+/prisma/copias/
+/prisma/test.db

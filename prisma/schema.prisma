@@ -1,0 +1,521 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// USUARIOS
+//
+// Una sola tabla y un solo tipo funcional de cuenta: el mismo usuario publica
+// NECESIDADES (lo que le hace falta) y SERVICIOS (lo que sabe hacer), se
+// postula y recibe postulaciones. NO existen cuentas separadas de "cliente" y
+// "proveedor" (PDR §4). El rol solo distingue al administrador de la
+// plataforma del resto.
+// ---------------------------------------------------------------------------
+
+model Usuario {
+  id        Int     @id @default(autoincrement())
+  rol       String  @default("usuario") // "admin" | "usuario"
+  email     String  @unique
+  password  String
+  nombres   String
+  apellidos String
+
+  dni         String?
+  // Datos de contacto: NO se muestran hasta que alguien paga el desbloqueo.
+  celular     String?
+  whatsapp    String?
+  direccion   String?
+  // La ciudad SÍ es pública: es la ubicación aproximada del PDR §37.
+  ciudad      String?
+  distrito    String?
+  descripcion String?
+  fotoUrl     String?
+
+  // Qué lado del marketplace tiene activado (PDR §4 matizado):
+  // "busco" | "ofrezco" | "ambos". NULL = todavía no ha contestado, y la app
+  // le pregunta en /bienvenida antes de dejarle entrar al panel.
+  //
+  // No parte la cuenta en dos: sigue habiendo UN solo tipo de usuario y el
+  // otro lado se activa cuando quiera desde /perfil. Solo decide qué se le
+  // enseña, para no abrumar a quien únicamente quiere contratar a alguien.
+  modo String?
+
+  // "activo" | "suspendido"
+  estado    String  @default("activo")
+  // Saldo de créditos. El histórico está en MovimientoCredito; este campo es la
+  // foto actual para no sumar la tabla entera en cada pantalla.
+  creditos  Int     @default(0)
+
+  necesidades      Necesidad[]
+  servicios        Servicio[]
+  postulaciones    Postulacion[]
+  trabajosPedidos  Trabajo[]     @relation("SolicitanteDelTrabajo")
+  trabajosHechos   Trabajo[]     @relation("ProveedorDelTrabajo")
+
+  calificacionesEmitidas  Calificacion[] @relation("AutorCalificacion")
+  calificacionesRecibidas Calificacion[] @relation("DestinatarioCalificacion")
+
+  desbloqueosPagados    Desbloqueo[] @relation("IniciadorDesbloqueo")
+  desbloqueosRecibidos  Desbloqueo[] @relation("ContraparteDesbloqueo")
+
+  movimientos   MovimientoCredito[] @relation("DuenoMovimiento")
+  ajustesHechos MovimientoCredito[] @relation("AdminMovimiento")
+  recargas      Recarga[]
+  notificaciones Notificacion[]
+  alertas       AlertaModeracion[]
+
+  createdAt DateTime @default(now())
+
+  @@index([rol, estado])
+  @@index([ciudad])
+}
+
+// ---------------------------------------------------------------------------
+// CATÁLOGO DE CATEGORÍAS
+// Necesidades y servicios comparten el MISMO árbol: si cada lado tuviera el
+// suyo, el matching por categoría (que es el factor de más peso) no podría
+// comparar nada.
+// ---------------------------------------------------------------------------
+
+model Categoria {
+  id     Int     @id @default(autoincrement())
+  nombre String  @unique
+  icono  String? // emoji
+  activa Boolean @default(true)
+  orden  Int     @default(0)
+
+  subcategorias Subcategoria[]
+  necesidades   Necesidad[]
+  servicios     Servicio[]
+}
+
+model Subcategoria {
+  id          Int     @id @default(autoincrement())
+  categoriaId Int
+  nombre      String
+  activa      Boolean @default(true)
+
+  categoria   Categoria   @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  necesidades Necesidad[]
+  servicios   Servicio[]
+
+  @@unique([categoriaId, nombre])
+}
+
+// ---------------------------------------------------------------------------
+// NECESIDAD — "necesito un servicio" (PDR §7)
+// ---------------------------------------------------------------------------
+
+model Necesidad {
+  id             Int     @id @default(autoincrement())
+  usuarioId      Int
+  titulo         String
+  categoriaId    Int
+  subcategoriaId Int?
+  // Cuando lo que se busca no está en la lista, el desplegable ofrece "Otro"
+  // y este campo guarda lo que el usuario escribió. Si está relleno,
+  // `subcategoriaId` es null: son excluyentes, y de eso se encarga
+  // `subcategoriaElegida()` en lib/publicaciones.ts.
+  subcategoriaOtra String?
+  descripcion    String
+  precioOfrecido Float?
+  ciudad         String
+  distrito       String?
+
+  // Para cuándo se necesita. Casi nadie tiene una fecha exacta en la cabeza
+  // —"cuanto antes" o "esta semana" es como se piensa de verdad—, así que el
+  // campo de calendario solo aparece si se elige "fecha_fija". Valores en
+  // lib/urgencia.ts:
+  //   cuanto_antes | esta_semana | proxima_semana | flexible | fecha_fija
+  urgencia       String?
+  // Solo se rellena cuando `urgencia` es "fecha_fija". Las necesidades
+  // anteriores a este campo pueden tener fecha sin urgencia: se siguen
+  // enseñando por la fecha.
+  fechaDeseada   DateTime?
+  horario        String?
+  observaciones  String?
+
+  // borrador | en_revision | rechazada | publicada | oferta_seleccionada |
+  // en_proceso | finalizada | cancelada
+  //
+  // Nada llega a `publicada` sin que el administrador lo apruebe: "Publicar"
+  // deja el aviso en `en_revision`.
+  estado String @default("borrador")
+
+  // Por qué no se aprobó. Se guarda para que el dueño sepa qué corregir: un
+  // rechazo sin explicación se lee como un fallo de la aplicación.
+  motivoRechazo String?
+  revisadaAt    DateTime?
+
+  // Palabras clave normalizadas (minúsculas, sin tildes, separadas por espacio)
+  // que precalcula lib/texto.ts al guardar. Se guardan porque SQLite no tiene
+  // búsqueda de texto completo y normalizar en cada consulta de matching
+  // obligaría a traerse la tabla entera a memoria.
+  claves String @default("")
+
+  usuario       Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  categoria     Categoria     @relation(fields: [categoriaId], references: [id])
+  subcategoria  Subcategoria? @relation(fields: [subcategoriaId], references: [id])
+  fotos         Foto[]
+  postulaciones Postulacion[]
+  coincidencias Match[]
+  desbloqueos   Desbloqueo[]
+  trabajo       Trabajo?
+
+  publicadaAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([estado, categoriaId])
+  @@index([usuarioId, estado])
+  @@index([ciudad])
+}
+
+// ---------------------------------------------------------------------------
+// SERVICIO — "ofrezco un servicio" (PDR §8)
+// ---------------------------------------------------------------------------
+
+model Servicio {
+  id             Int     @id @default(autoincrement())
+  usuarioId      Int
+  nombre         String
+  categoriaId    Int
+  subcategoriaId Int?
+  // Cuando lo que se busca no está en la lista, el desplegable ofrece "Otro"
+  // y este campo guarda lo que el usuario escribió. Si está relleno,
+  // `subcategoriaId` es null: son excluyentes, y de eso se encarga
+  // `subcategoriaElegida()` en lib/publicaciones.ts.
+  subcategoriaOtra String?
+  descripcion    String
+  experiencia    String?
+  // Zona donde trabaja. `ciudad` es la que compara el matching; `zona` es el
+  // texto libre que ve el usuario ("Cajamarca y alrededores").
+  ciudad         String
+  zona           String?
+  precioDesde    Float?
+  disponibilidad String?
+  observaciones  String?
+
+  // borrador | en_revision | rechazado | publicado | pausado | desactivado
+  // Mismo criterio que la necesidad: se aprueba antes de publicarse.
+  estado String @default("borrador")
+
+  motivoRechazo String?
+  revisadaAt    DateTime?
+
+  claves String @default("")
+
+  usuario      Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  categoria    Categoria     @relation(fields: [categoriaId], references: [id])
+  subcategoria Subcategoria? @relation(fields: [subcategoriaId], references: [id])
+  fotos        Foto[]
+  postulaciones Postulacion[]
+  coincidencias Match[]
+  desbloqueos   Desbloqueo[]
+
+  publicadoAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([estado, categoriaId])
+  @@index([usuarioId, estado])
+  @@index([ciudad])
+}
+
+// Fotos de una necesidad O de un servicio. Tabla propia porque SQLite no
+// guarda listas y un JSON en columna no se puede contar ni borrar en cascada.
+model Foto {
+  id          Int    @id @default(autoincrement())
+  url         String
+  orden       Int    @default(0)
+  necesidadId Int?
+  servicioId  Int?
+
+  necesidad Necesidad? @relation(fields: [necesidadId], references: [id], onDelete: Cascade)
+  servicio  Servicio?  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+
+  @@index([necesidadId])
+  @@index([servicioId])
+}
+
+// ---------------------------------------------------------------------------
+// POSTULACIÓN — la oferta que hace quien puede realizar el trabajo (PDR §10)
+// ---------------------------------------------------------------------------
+
+model Postulacion {
+  id          Int    @id @default(autoincrement())
+  necesidadId Int
+  usuarioId   Int
+  // Con qué servicio publicado se postula (opcional: puede postularse sin
+  // tener servicio publicado). Sirve para medir qué coincidencias convierten.
+  servicioId  Int?
+
+  precio         Float
+  comentario     String
+  tiempoEstimado String?
+  disponibilidad String?
+  fechaPropuesta DateTime?
+
+  // enviada | seleccionada | no_seleccionada | retirada
+  estado String @default("enviada")
+
+  necesidad Necesidad @relation(fields: [necesidadId], references: [id], onDelete: Cascade)
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  servicio  Servicio? @relation(fields: [servicioId], references: [id], onDelete: SetNull)
+  trabajo   Trabajo?
+
+  createdAt DateTime @default(now())
+
+  // Una sola postulación por persona y necesidad (PDR §11).
+  @@unique([necesidadId, usuarioId])
+  @@index([usuarioId, estado])
+}
+
+// ---------------------------------------------------------------------------
+// TRABAJO — la relación real que nace al aceptar una oferta.
+// Es lo único que habilita calificar (PDR §27).
+// ---------------------------------------------------------------------------
+
+model Trabajo {
+  id            Int @id @default(autoincrement())
+  necesidadId   Int @unique
+  postulacionId Int @unique
+  solicitanteId Int
+  proveedorId   Int
+
+  precioAcordado Float
+
+  // en_proceso | finalizado | cancelado
+  estado String @default("en_proceso")
+
+  necesidad   Necesidad   @relation(fields: [necesidadId], references: [id], onDelete: Cascade)
+  postulacion Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
+  solicitante Usuario     @relation("SolicitanteDelTrabajo", fields: [solicitanteId], references: [id])
+  proveedor   Usuario     @relation("ProveedorDelTrabajo", fields: [proveedorId], references: [id])
+
+  calificaciones Calificacion[]
+
+  createdAt    DateTime  @default(now())
+  finalizadoAt DateTime?
+
+  @@index([solicitanteId, estado])
+  @@index([proveedorId, estado])
+}
+
+// ---------------------------------------------------------------------------
+// CALIFICACIÓN — bidireccional, una por persona y trabajo (PDR §26-27)
+// ---------------------------------------------------------------------------
+
+model Calificacion {
+  id             Int    @id @default(autoincrement())
+  trabajoId      Int
+  autorId        Int
+  destinatarioId Int
+  estrellas      Int
+  comentario     String?
+  // "solicitante" | "proveedor": el papel del AUTOR en ese trabajo.
+  papel          String
+  oculta         Boolean @default(false) // moderación del admin
+
+  trabajo      Trabajo @relation(fields: [trabajoId], references: [id], onDelete: Cascade)
+  autor        Usuario @relation("AutorCalificacion", fields: [autorId], references: [id], onDelete: Cascade)
+  destinatario Usuario @relation("DestinatarioCalificacion", fields: [destinatarioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([trabajoId, autorId])
+  @@index([destinatarioId, oculta])
+}
+
+// ---------------------------------------------------------------------------
+// DESBLOQUEO DE CONTACTO — el corazón del cobro (PDR §14-16, §23)
+//
+// Paga UN crédito quien inicia el contacto. La fila resultante es la que
+// consultan LAS DOS PARTES para saber si ya pueden verse los datos: por eso
+// `puedeVerContacto()` busca la pareja en cualquiera de los dos sentidos.
+// El @@unique impide cobrar dos veces el mismo contacto sobre la misma
+// publicación.
+// ---------------------------------------------------------------------------
+
+model Desbloqueo {
+  id           Int @id @default(autoincrement())
+  iniciadorId  Int // quien paga
+  contraparteId Int // a quién se desbloquea
+
+  // De qué publicación nace el contacto (una de las dos, nunca ambas).
+  necesidadId Int?
+  servicioId  Int?
+
+  // "aceptar_oferta" (quien busca acepta una postulación)
+  // "oportunidad"    (quien ofrece contacta a quien publicó la necesidad)
+  origen  String
+  costo   Int    @default(1)
+
+  iniciador   Usuario    @relation("IniciadorDesbloqueo", fields: [iniciadorId], references: [id], onDelete: Cascade)
+  contraparte Usuario    @relation("ContraparteDesbloqueo", fields: [contraparteId], references: [id], onDelete: Cascade)
+  necesidad   Necesidad? @relation(fields: [necesidadId], references: [id], onDelete: Cascade)
+  servicio    Servicio?  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+
+  movimiento MovimientoCredito?
+
+  createdAt DateTime @default(now())
+
+  @@unique([iniciadorId, contraparteId, necesidadId])
+  @@index([contraparteId])
+}
+
+// ---------------------------------------------------------------------------
+// CRÉDITOS (PDR §29-32)
+// ---------------------------------------------------------------------------
+
+model PaqueteCredito {
+  id       Int     @id @default(autoincrement())
+  nombre   String
+  creditos Int
+  precio   Float
+  activo   Boolean @default(true)
+  orden    Int     @default(0)
+
+  recargas Recarga[]
+}
+
+model Recarga {
+  id          Int     @id @default(autoincrement())
+  usuarioId   Int
+  paqueteId   Int
+  // Se copian del paquete al momento de solicitar: si el admin cambia el
+  // precio después, la solicitud ya enviada no debe cambiar de valor.
+  creditos    Int
+  monto       Float
+  comprobante String
+  operacion   String? // número de operación de Yape que escribe el usuario
+
+  // pendiente | aprobada | rechazada
+  estado    String  @default("pendiente")
+  notaAdmin String?
+
+  usuario Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  paquete PaqueteCredito @relation(fields: [paqueteId], references: [id])
+
+  createdAt  DateTime  @default(now())
+  resueltoAt DateTime?
+
+  @@index([estado, createdAt])
+  @@index([usuarioId])
+}
+
+model MovimientoCredito {
+  id        Int    @id @default(autoincrement())
+  usuarioId Int
+  // recarga | consumo | devolucion | ajuste
+  tipo      String
+  // Positivo suma, negativo resta. El signo va aquí para que el histórico se
+  // pueda sumar tal cual y cuadre siempre con Usuario.creditos.
+  cantidad  Int
+  saldoDespues Int
+  motivo    String
+
+  // A qué apunta el movimiento (recargaId, desbloqueoId…). Referencia suelta a
+  // propósito: un movimiento no debe desaparecer si se borra lo que lo originó.
+  refTipo String?
+  refId   Int?
+
+  desbloqueoId Int? @unique
+  adminId      Int?
+
+  usuario    Usuario     @relation("DuenoMovimiento", fields: [usuarioId], references: [id], onDelete: Cascade)
+  admin      Usuario?    @relation("AdminMovimiento", fields: [adminId], references: [id], onDelete: SetNull)
+  desbloqueo Desbloqueo? @relation(fields: [desbloqueoId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId, createdAt])
+  @@index([tipo, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// MATCHING (PDR §17-22, §40)
+//
+// Se guarda cada coincidencia detectada porque el panel del admin tiene que
+// contar cuántas se detectaron, cuántas se miraron, cuántas terminaron en
+// postulación y cuántas en contacto. Sin persistirlas no hay nada que contar.
+// ---------------------------------------------------------------------------
+
+model Match {
+  id          Int @id @default(autoincrement())
+  necesidadId Int
+  servicioId  Int
+  puntaje     Int // 0-100
+
+  vistoAt    DateTime? // el usuario abrió la oportunidad
+  postuloAt  DateTime? // la coincidencia terminó en postulación
+  contactoAt DateTime? // la coincidencia terminó en desbloqueo
+
+  necesidad Necesidad @relation(fields: [necesidadId], references: [id], onDelete: Cascade)
+  servicio  Servicio  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([necesidadId, servicioId])
+  @@index([servicioId, puntaje])
+  @@index([necesidadId, puntaje])
+}
+
+// ---------------------------------------------------------------------------
+// NOTIFICACIONES (PDR §38)
+// ---------------------------------------------------------------------------
+
+model Notificacion {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  tipo      String
+  titulo    String
+  mensaje   String
+  url       String?
+  leida     Boolean @default(false)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId, leida, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// MODERACIÓN (PDR §24, §41)
+// Queda registro de cada intento de sacar la negociación de la plataforma.
+// ---------------------------------------------------------------------------
+
+model AlertaModeracion {
+  id        Int    @id @default(autoincrement())
+  usuarioId Int
+  // "evasion" (datos de contacto en un texto) | "reporte"
+  tipo      String @default("evasion")
+  // Dónde se detectó: "necesidad" | "servicio" | "postulacion" | "perfil"
+  origen    String
+  detalle   String // qué patrón se encontró
+  texto     String // el texto que lo disparó, recortado
+  revisada  Boolean @default(false)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([revisada, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// CONFIGURACIÓN — parámetros que el admin enciende/apaga (ver lib/config.ts)
+// ---------------------------------------------------------------------------
+
+model Configuracion {
+  id    Int    @id @default(autoincrement())
+  clave String @unique
+  valor String
+}
