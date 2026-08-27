@@ -180,12 +180,16 @@ async function ListaNecesidades({ filtro, saltar }: { filtro: unknown; saltar: n
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {necesidades.map((n) => (
-        <Link key={n.id} href={`/p/necesidad/${n.id}`} className="tarjeta flex flex-col">
+        <Link
+          key={n.id}
+          href={`/p/necesidad/${n.id}`}
+          className="tarjeta-suave flex flex-col border-cielo-200 bg-cielo-50"
+        >
           {n.fotos[0] && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={n.fotos[0].url} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
           )}
-          <span className="chip w-fit border-cielo-300 bg-cielo-50 text-cielo-700">
+          <span className="chip w-fit border-cielo-300 bg-white text-cielo-700">
             {n.categoria.icono} {n.categoria.nombre}
           </span>
           <h2 className="mt-2 font-bold text-slate-800">{n.titulo}</h2>
@@ -225,12 +229,16 @@ async function ListaServicios({ filtro, saltar }: { filtro: unknown; saltar: num
         const r = reps.get(s.usuarioId)
         const nombre = `${s.usuario.nombres} ${s.usuario.apellidos}`.trim()
         return (
-          <Link key={s.id} href={`/p/servicio/${s.id}`} className="tarjeta flex flex-col">
+          <Link
+            key={s.id}
+            href={`/p/servicio/${s.id}`}
+            className="tarjeta-suave flex flex-col border-menta-200 bg-menta-50"
+          >
             {s.fotos[0] && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={s.fotos[0].url} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
             )}
-            <span className="chip w-fit border-menta-300 bg-menta-50 text-menta-700">
+            <span className="chip w-fit border-menta-300 bg-white text-menta-700">
               {s.categoria.icono} {s.categoria.nombre}
             </span>
             <h2 className="mt-2 font-bold text-slate-800">{s.nombre}</h2>
