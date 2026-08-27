@@ -90,7 +90,7 @@ export default function RegistroForm({ lado }: { lado?: Modo }) {
           type="button"
           onClick={() => setTipoCuenta('natural')}
           className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
-            !esEmpresa ? 'bg-white text-marca-700 shadow-sm' : 'text-slate-500'
+            !esEmpresa ? 'bg-marino-600 text-white shadow-sm' : 'bg-marino-50 text-marino-700'
           }`}
         >
           Persona natural
@@ -99,7 +99,7 @@ export default function RegistroForm({ lado }: { lado?: Modo }) {
           type="button"
           onClick={() => setTipoCuenta('empresa')}
           className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
-            esEmpresa ? 'bg-white text-marca-700 shadow-sm' : 'text-slate-500'
+            esEmpresa ? 'bg-verde-600 text-white shadow-sm' : 'bg-verde-50 text-verde-700'
           }`}
         >
           Empresa
