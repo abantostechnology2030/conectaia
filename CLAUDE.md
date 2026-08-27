@@ -35,6 +35,7 @@ hecho. Cada uno tiene su sección más abajo.
 | Un doble clic revienta y enseña un error de base de datos | Comprobar el estado FUERA de la transacción y no tomarlo de forma atómica | `necesidades/[id]/aceptar/route.ts` |
 | El usuario ve texto interno de Prisma en pantalla | Devolver `e.message` al navegador en el 500 | `lib/guard.ts` |
 | Un dato privado aparece en el HTML | Hacer `spread` del usuario al construir props de cliente | `necesidades/[id]/page.tsx` |
+| Una empresa se ve como "Constructora ABC " con un espacio de más, o sin RUC en una pantalla nueva | `nombres` guarda la razón social y `apellidos` queda vacío; el RUC vive en su propia columna | `api/registro/route.ts` |
 | Nadie recibe oportunidades | El servicio está en borrador, pausado o **en revisión**: solo se cruza lo publicado | `lib/matching.ts` |
 | Publico algo y no aparece por ningún lado | Es correcto: está esperando aprobación. Sin el aviso, se lee como que se perdió | `components/AvisoRevision.tsx` |
 | La aprobación se salta editando después | Editar lo ya aprobado tiene que devolverlo a la cola | `api/necesidades/[id]/route.ts` |
@@ -216,6 +217,58 @@ puede cambiar.
 ⚠️ **El `required` del formulario no protege nada por sí solo**: el alta se puede pedir desde la
 consola del navegador. Lo que vale son las comprobaciones de la ruta, y el flujo automatizado las
 verifica quitando **un campo cada vez**.
+
+### Registro como empresa (Usuario.tipoCuenta)
+El formulario de registro tiene un selector **"Persona natural" / "Empresa"**, arriba del todo.
+Cambia qué bloque de identidad se pide y qué exige `POST /api/registro`:
+
+| | Persona natural | Empresa |
+|---|---|---|
+| Identidad | Nombres, apellidos, DNI | Razón social, RUC, representante legal, dirección |
+| Compartidos | Correo, celular, ciudad, contraseña | Correo, celular, ciudad, contraseña |
+| Menor de edad / discapacidad | Sí, con datos del tutor si aplica | No se ofrece: una empresa no puede serlo |
+
+⚠️ **El RUC es el equivalente al DNI, con la misma razón:** `Usuario.ruc` tiene índice **único**
+para que una empresa no pueda abrir varias cuentas y cobrar `creditos_bienvenida` en cada una.
+`lib/ruc.ts` es la copia de `lib/dni.ts` para el RUC (11 dígitos) — **tampoco importa nada de
+servidor**, por si acaso el formulario lo usa directamente (mismo riesgo de Prisma en el navegador
+que ya rompió `SelectorLado` una vez).
+
+⚠️ **`nombres` y `apellidos` NO se dejan vacíos para una empresa, aunque el formulario no los
+pida.** Ese patrón —`${nombres} ${apellidos}`— es el nombre que se enseña en más de veinte
+archivos (calificaciones, trabajos, panel de admin, fichas públicas). Tocar los veinte para que
+sepan leer `razonSocial` cuando no hay `nombres` habría sido mucho más riesgo que el atajo: al
+crear una cuenta "empresa", `nombres` guarda la razón social y `apellidos` queda en cadena vacía.
+La razón social **sin abreviar** vive además, intacta, en `Usuario.razonSocial` — por si algún día
+hace falta distinguir "el nombre para mostrar" del dato formal.
+
+Si se agrega una pantalla que necesite mostrar el RUC, el representante legal o la dirección
+formal de una empresa, hay que leerlos de sus propias columnas — nunca asumir que `nombres` /
+`apellidos` los contienen con el formato correcto.
+
+### Menor de edad o persona con discapacidad: datos del tutor en el propio alta
+El formulario de registro tiene dos casillas, ninguna excluyente de la otra: **"Soy menor de
+edad"** y **"Soy una persona con discapacidad"**. Al marcar cualquiera de las dos (o ambas) se
+despliega dentro del mismo formulario un bloque con los datos del tutor —**nombres, apellidos,
+DNI, celular, correo y parentesco**—, y los seis pasan a ser obligatorios para poder crear la
+cuenta. Sin marcar ninguna, el alta es la de siempre.
+
+- Debajo de "Soy menor de edad" sale un texto gris: *"Se requiere la autorización de tu padre,
+  madre o tutor legal para continuar."*
+- Debajo de "Soy una persona con discapacidad" sale otro distinto: *"Por seguridad, solicitamos
+  los datos básicos de tu tutor ahora. Podrás completar la información detallada y documentos
+  adicionales desde tu Perfil una vez registrado."* — a propósito no pide aquí más que lo mínimo:
+  documentos y detalle se completan después, en el perfil.
+
+⚠️ **La validación real vive en `POST /api/registro`, no en el `required` del HTML**, igual que el
+resto del alta: sin eso bastaría con mandar el `fetch` desde la consola marcando la casilla y
+omitiendo los datos del tutor.
+
+`Usuario.esMenorEdad` / `Usuario.esPersonaConDiscapacidad` (booleanos, `false` por defecto) y
+`Usuario.tutorNombres` / `tutorApellidos` / `tutorDni` / `tutorCelular` / `tutorEmail` /
+`tutorParentesco` (todos opcionales en el schema, solo se exigen desde la ruta cuando aplica algún
+caso). **`tutorDni` NO es único**: la misma persona puede ser tutor de más de una cuenta, a
+diferencia del `dni` del propio usuario.
 
 ### El DNI: obligatorio en el registro y único (lib/dni.ts)
 El alta pide **DNI de 8 dígitos** junto al nombre, y `Usuario.dni` tiene índice **único**.
@@ -619,7 +672,7 @@ personas. El detalle va a `console.error`, no al navegador.
 
 | Ruta | Qué hace |
 |---|---|
-| `POST /api/registro` | Alta con **todos los datos obligatorios** (DNI único incluido) y su `modo` ya puesto (`busco` si no llega ninguno) + créditos de bienvenida como movimiento (no como valor inicial) |
+| `POST /api/registro` | Alta con **todos los datos obligatorios** (DNI único incluido) y su `modo` ya puesto (`busco` si no llega ninguno) + créditos de bienvenida como movimiento (no como valor inicial). Si marca menor de edad o discapacidad, exige además los 6 datos del tutor. Si `tipoCuenta` es `empresa`, exige razón social, RUC (único), representante legal y dirección en vez de nombres/apellidos/DNI |
 | `PATCH /api/perfil/modo` | Cambia de lado. Solo acepta `busco` u `ofrezco`; lo llaman el login, los botones del panel y el perfil |
 | `POST/PATCH/DELETE /api/necesidades[/[id]]` | CRUD; recalcula matching y `claves` |
 | `PATCH /api/necesidades/[id]/estado` | Transiciones válidas; al cancelar avisa a quienes ofertaron |

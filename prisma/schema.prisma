@@ -23,18 +23,42 @@ model Usuario {
   rol       String  @default("usuario") // "admin" | "usuario"
   email     String  @unique
   password  String
+
+  // "natural" | "empresa". Solo decide qué exige `POST /api/registro` en el
+  // alta (los datos de la persona o los de la empresa) y qué bloque enseña
+  // el formulario. NO crea un tipo de cuenta nuevo dentro de la plataforma:
+  // una empresa sigue siendo un `Usuario` normal, con su `modo` y sus dos
+  // lados igual que cualquiera.
+  tipoCuenta String @default("natural")
+
+  // `nombres` / `apellidos` son el nombre para mostrar EN TODA LA APP —
+  // calificaciones, trabajos, panel de admin, fichas públicas—, y ese patrón
+  // (`${nombres} ${apellidos}`) está repetido en más de veinte archivos.
+  // Para no tocar todos esos sitios, una cuenta "empresa" también los llena:
+  // `nombres` recibe la razón social y `apellidos` queda vacío. La razón
+  // social "de verdad" vive además en `razonSocial`, sin abreviar.
   nombres   String
   apellidos String
 
-  // Documento de identidad, 8 dígitos. Se pide en el registro y es ÚNICO: una
-  // persona, una cuenta. Sin eso, los créditos de bienvenida se cobran tantas
-  // veces como correos tenga alguien.
+  // Documento de identidad, 8 dígitos. Se pide en el registro (cuentas
+  // "natural") y es ÚNICO: una persona, una cuenta. Sin eso, los créditos de
+  // bienvenida se cobran tantas veces como correos tenga alguien.
   //
   // Sigue siendo opcional en la base por las cuentas que nacieron antes de
-  // pedirlo (y por el administrador, que no participa en el marketplace):
-  // SQLite admite varios NULL bajo un índice único.
+  // pedirlo (y por el administrador, y por las cuentas "empresa"): SQLite
+  // admite varios NULL bajo un índice único.
   dni         String? @unique
+
+  // Datos de la empresa, solo para cuentas "empresa". El RUC es su equivalente
+  // al DNI: ÚNICO, con la misma razón — una empresa, una cuenta, un regalo de
+  // bienvenida.
+  razonSocial        String?
+  ruc                String? @unique
+  representanteLegal String?
+
   // Datos de contacto: NO se muestran hasta que alguien paga el desbloqueo.
+  // `direccion` la usan tanto personas (opcional, se completa en el perfil)
+  // como empresas (obligatoria en su alta).
   celular     String?
   whatsapp    String?
   direccion   String?
@@ -52,6 +76,23 @@ model Usuario {
   // otro lado se activa cuando quiera desde /perfil. Solo decide qué se le
   // enseña, para no abrumar a quien únicamente quiere contratar a alguien.
   modo String?
+
+  // Casos especiales del registro: cuando cualquiera de los dos es true, el
+  // alta exige además los datos del tutor de más abajo. No son excluyentes
+  // entre sí (alguien puede ser menor Y tener una discapacidad).
+  esMenorEdad              Boolean @default(false)
+  esPersonaConDiscapacidad Boolean @default(false)
+
+  // Datos básicos del tutor/responsable, solo cuando aplica uno de los dos
+  // casos de arriba. Es información mínima para poder contactarlo si hace
+  // falta verificar; el detalle adicional (documentos, etc.) se completa
+  // después desde el Perfil, no en el alta.
+  tutorNombres   String?
+  tutorApellidos String?
+  tutorDni       String?
+  tutorCelular   String?
+  tutorEmail     String?
+  tutorParentesco String?
 
   // "activo" | "suspendido"
   estado    String  @default("activo")
