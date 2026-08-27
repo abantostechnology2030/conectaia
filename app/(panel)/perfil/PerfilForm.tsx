@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Avatar } from '@/components/Avatar'
+import { CampoFotos } from '@/components/CampoFotos'
 import { DNI_DIGITOS } from '@/lib/dni'
 
 type Datos = {
@@ -17,6 +18,8 @@ type Datos = {
   direccion: string | null
   descripcion: string | null
   fotoUrl: string | null
+  esPersonaConDiscapacidad: boolean
+  fotosHabilidades: { id: number; url: string }[]
 }
 
 export default function PerfilForm({ datos }: { datos: Datos }) {
@@ -25,6 +28,7 @@ export default function PerfilForm({ datos }: { datos: Datos }) {
   const [ok, setOk] = useState(false)
   const [ocupado, setOcupado] = useState(false)
   const [previa, setPrevia] = useState<string | null>(null)
+  const [fotosHabilidades, setFotosHabilidades] = useState(datos.fotosHabilidades)
 
   async function enviar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -42,6 +46,11 @@ export default function PerfilForm({ datos }: { datos: Datos }) {
     }
     setOk(true)
     router.refresh()
+  }
+
+  async function quitarFotoHabilidad(id: number) {
+    const r = await fetch(`/api/fotos/${id}`, { method: 'DELETE' })
+    if (r.ok) setFotosHabilidades((f) => f.filter((x) => x.id !== id))
   }
 
   const nombreCompleto = `${datos.nombres} ${datos.apellidos}`.trim()
@@ -120,6 +129,23 @@ export default function PerfilForm({ datos }: { datos: Datos }) {
           </div>
         </div>
       </div>
+
+      {datos.esPersonaConDiscapacidad && (
+        <div className="tarjeta space-y-4">
+          <h2 className="font-bold text-slate-700">Muestra tu talento</h2>
+          <p className="rounded-xl border border-marca-200 bg-marca-50 px-4 py-2.5 text-sm text-marca-800">
+            Al registrarte te dijimos que podrías completar esto después: aprovecha el campo
+            &ldquo;Sobre ti&rdquo; de arriba para contar tus habilidades y sube fotos de trabajos
+            que hayas hecho. Es lo que ven las personas antes de contactarte.
+          </p>
+
+          <CampoFotos
+            yaSubidas={fotosHabilidades}
+            max={5}
+            alQuitarSubida={quitarFotoHabilidad}
+          />
+        </div>
+      )}
 
       <div className="tarjeta space-y-4">
         <h2 className="font-bold text-slate-700">Datos privados</h2>

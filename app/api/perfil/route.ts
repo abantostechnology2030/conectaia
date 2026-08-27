@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 import { conSesion } from '@/lib/guard'
 import { revisarTextos, respuestaSiBloqueado } from '@/lib/moderacion'
 import { guardarImagen, borrarImagen } from '@/lib/uploads'
-import { texto, textoOpcional } from '@/lib/publicaciones'
+import { texto, textoOpcional, guardarFotos } from '@/lib/publicaciones'
 import { normalizarDni, dniValido, ERROR_DNI } from '@/lib/dni'
 
 // Editar el propio perfil (PDR §25).
@@ -26,7 +26,7 @@ export const PATCH = conSesion(async (ctx, req) => {
 
   const actual = await prisma.usuario.findUnique({
     where: { id: ctx.id },
-    select: { dni: true, fotoUrl: true },
+    select: { dni: true, fotoUrl: true, esPersonaConDiscapacidad: true },
   })
 
   // El DNI solo se escribe si la cuenta todavía no tiene uno (las de antes de
@@ -89,6 +89,14 @@ export const PATCH = conSesion(async (ctx, req) => {
       ...(fotoUrl ? { fotoUrl } : {}),
     },
   })
+
+  // Las fotos de habilidades/trabajos solo existen para cuentas "persona con
+  // discapacidad": el formulario no las ofrece a nadie más, y la comprobación
+  // tiene que estar también aquí, o bastaría con mandar el campo `fotos`
+  // desde la consola del navegador.
+  if (actual?.esPersonaConDiscapacidad) {
+    await guardarFotos(form, { usuarioId: ctx.id }, 'habilidades')
+  }
 
   return Response.json({ ok: true })
 })

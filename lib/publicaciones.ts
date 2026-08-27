@@ -110,7 +110,7 @@ export async function validarCategoria(
  */
 export async function guardarFotos(
   form: FormData,
-  destino: { necesidadId?: number; servicioId?: number },
+  destino: { necesidadId?: number; servicioId?: number; usuarioId?: number },
   carpeta: string,
 ): Promise<number> {
   const archivos = form.getAll('fotos').filter((f): f is File => f instanceof File && f.size > 0)
@@ -120,7 +120,11 @@ export async function guardarFotos(
   const cupo = Math.max(0, MAX_FOTOS - yaHay)
   if (cupo === 0) return 0
 
-  const base = destino.necesidadId ? `n${destino.necesidadId}` : `s${destino.servicioId}`
+  const base = destino.necesidadId
+    ? `n${destino.necesidadId}`
+    : destino.servicioId
+      ? `s${destino.servicioId}`
+      : `u${destino.usuarioId}`
   let guardadas = 0
 
   for (const [i, archivo] of archivos.slice(0, cupo).entries()) {
@@ -146,7 +150,9 @@ export async function borrarFoto(fotoId: number, usuarioId: number): Promise<boo
   })
   if (!foto) return false
 
-  const dueno = foto.necesidad?.usuarioId ?? foto.servicio?.usuarioId
+  // Una foto de perfil no pasa por `necesidad` ni `servicio`: es dueña de sí
+  // misma vía `usuarioId` directo.
+  const dueno = foto.necesidad?.usuarioId ?? foto.servicio?.usuarioId ?? foto.usuarioId
   if (dueno !== usuarioId) return false
 
   await prisma.foto.delete({ where: { id: fotoId } })

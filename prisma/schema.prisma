@@ -103,6 +103,10 @@ model Usuario {
   necesidades      Necesidad[]
   servicios        Servicio[]
   postulaciones    Postulacion[]
+  // Fotos de habilidades o trabajos, solo para cuentas "persona con
+  // discapacidad": el registro promete completarlas después, desde el
+  // Perfil (ver AvisoRevision / el texto de la casilla en el registro).
+  fotosHabilidades Foto[]
   trabajosPedidos  Trabajo[]     @relation("SolicitanteDelTrabajo")
   trabajosHechos   Trabajo[]     @relation("ProveedorDelTrabajo")
 
@@ -276,20 +280,25 @@ model Servicio {
   @@index([ciudad])
 }
 
-// Fotos de una necesidad O de un servicio. Tabla propia porque SQLite no
-// guarda listas y un JSON en columna no se puede contar ni borrar en cascada.
+// Fotos de una necesidad, de un servicio, O del perfil de un usuario (las
+// habilidades/trabajos de una cuenta "persona con discapacidad"). Tabla
+// propia porque SQLite no guarda listas y un JSON en columna no se puede
+// contar ni borrar en cascada. Exactamente uno de los tres FK está lleno.
 model Foto {
   id          Int    @id @default(autoincrement())
   url         String
   orden       Int    @default(0)
   necesidadId Int?
   servicioId  Int?
+  usuarioId   Int?
 
   necesidad Necesidad? @relation(fields: [necesidadId], references: [id], onDelete: Cascade)
   servicio  Servicio?  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+  usuario   Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([necesidadId])
   @@index([servicioId])
+  @@index([usuarioId])
 }
 
 // ---------------------------------------------------------------------------

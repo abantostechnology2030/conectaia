@@ -54,7 +54,7 @@ export default async function Portada() {
   // vale 1 es el mismo error que escribir el regalo a mano.
   const contactosDeRegalo = Math.floor(regalo / Math.max(1, aNumero(cfg.costo_desbloqueo, 1)))
 
-  const [necesidades, servicios, categorias, ultimas] = await Promise.all([
+  const [necesidades, servicios, categorias, ultimasNecesidades, ultimosServicios] = await Promise.all([
     prisma.necesidad.count({ where: { estado: 'publicada' } }),
     prisma.servicio.count({ where: { estado: 'publicado' } }),
     prisma.categoria.findMany({ where: { activa: true }, orderBy: { orden: 'asc' }, take: 12 }),
@@ -62,6 +62,12 @@ export default async function Portada() {
       where: { estado: 'publicada' },
       include: { categoria: true },
       orderBy: { publicadaAt: 'desc' },
+      take: 6,
+    }),
+    prisma.servicio.findMany({
+      where: { estado: 'publicado' },
+      include: { categoria: true },
+      orderBy: { publicadoAt: 'desc' },
       take: 6,
     }),
   ])
@@ -207,6 +213,25 @@ export default async function Portada() {
               </Link>
             </div>
 
+            {/* Aviso de inclusión, justo debajo de las dos puertas: es donde
+                se decide entrar, y es a quien va dirigido —menores de edad y
+                personas con discapacidad que quieran ofrecer un servicio— a
+                quien más le importa saber esto ANTES de registrarse, no
+                después. El registro de esos dos casos exige los datos del
+                tutor (ver RegistroForm), y esta tarjeta es lo que explica
+                por qué. */}
+            <div className="elevar mx-auto mt-6 max-w-3xl rounded-2xl border-2 border-verde-300 bg-gradient-to-r from-marino-50 to-verde-50 p-5 text-left">
+              <p className="font-extrabold text-marino-900">
+                🤝 ¡Inclusión y oportunidades para todos!
+              </p>
+              <p className="mt-1.5 text-sm text-slate-700">
+                En ConectaIA damos la bienvenida a menores de edad y personas con discapacidad que
+                deseen ofrecer sus servicios. Para garantizar un entorno seguro, el registro se
+                realiza bajo la supervisión y con los datos de un tutor legal. ¡Potencia tu talento
+                con nosotros!
+              </p>
+            </div>
+
             <p className="mt-6 text-sm text-slate-500">
               <span className="font-semibold text-verde-700">🤝 ConectaIA</span> encuentra las
               coincidencias entre necesidades y servicios.
@@ -225,6 +250,77 @@ export default async function Portada() {
             )}
           </div>
         </section>
+
+        {/* Últimas necesidades y últimos servicios: lo más reciente de los
+            dos lados del marketplace, justo después de la presentación y el
+            aviso de inclusión —es contenido que demuestra que la plataforma
+            tiene actividad real—, antes de "cómo funciona", que es apoyo,
+            no la razón de estar aquí. */}
+        {ultimasNecesidades.length > 0 && (
+          <section className="border-t border-marino-100 bg-marino-50/40 py-14">
+            <div className="mx-auto max-w-6xl px-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-2xl font-extrabold text-marino-900">Últimas necesidades</h2>
+                <Link href="/buscar?tipo=necesidad" className="btn-secundario">
+                  Ver todas
+                </Link>
+              </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {ultimasNecesidades.map((n) => (
+                  <Link key={n.id} href={`/p/necesidad/${n.id}`} className="tarjeta block">
+                    <span className="chip bg-cielo-50 border-cielo-300 text-cielo-700">
+                      {n.categoria.icono} {n.categoria.nombre}
+                    </span>
+                    <h3 className="mt-2 font-bold text-slate-800">{n.titulo}</h3>
+                    <p className="lineas-2 mt-1 text-sm text-slate-600">{n.descripcion}</p>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <span className="inline-flex items-center gap-1 text-slate-500">
+                        <Icono nombre="ubicacion" className="h-4 w-4" />
+                        {n.ciudad}
+                      </span>
+                      <span className="font-extrabold text-marino-700">
+                        {soles(n.precioOfrecido)}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {ultimosServicios.length > 0 && (
+          <section className="border-t border-marino-100 bg-white py-14">
+            <div className="mx-auto max-w-6xl px-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-2xl font-extrabold text-marino-900">Últimos servicios</h2>
+                <Link href="/buscar?tipo=servicio" className="btn-secundario">
+                  Ver todos
+                </Link>
+              </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {ultimosServicios.map((s) => (
+                  <Link key={s.id} href={`/p/servicio/${s.id}`} className="tarjeta block">
+                    <span className="chip bg-menta-50 border-menta-300 text-menta-700">
+                      {s.categoria.icono} {s.categoria.nombre}
+                    </span>
+                    <h3 className="mt-2 font-bold text-slate-800">{s.nombre}</h3>
+                    <p className="lineas-2 mt-1 text-sm text-slate-600">{s.descripcion}</p>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <span className="inline-flex items-center gap-1 text-slate-500">
+                        <Icono nombre="ubicacion" className="h-4 w-4" />
+                        {s.ciudad}
+                      </span>
+                      <span className="font-extrabold text-marino-700">
+                        Desde {soles(s.precioDesde, '—')}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Cómo funciona */}
         <section className="border-y border-marino-100 bg-white py-14">
@@ -273,40 +369,6 @@ export default async function Portada() {
             ))}
           </div>
         </section>
-
-        {/* Últimas necesidades */}
-        {ultimas.length > 0 && (
-          <section className="border-t border-marino-100 bg-marino-50/40 py-14">
-            <div className="mx-auto max-w-6xl px-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-2xl font-extrabold text-marino-900">Últimas necesidades</h2>
-                <Link href="/buscar" className="btn-secundario">
-                  Ver todas
-                </Link>
-              </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {ultimas.map((n) => (
-                  <Link key={n.id} href={`/p/necesidad/${n.id}`} className="tarjeta block">
-                    <span className="chip bg-cielo-50 border-cielo-300 text-cielo-700">
-                      {n.categoria.icono} {n.categoria.nombre}
-                    </span>
-                    <h3 className="mt-2 font-bold text-slate-800">{n.titulo}</h3>
-                    <p className="lineas-2 mt-1 text-sm text-slate-600">{n.descripcion}</p>
-                    <div className="mt-3 flex items-center justify-between text-sm">
-                      <span className="inline-flex items-center gap-1 text-slate-500">
-                        <Icono nombre="ubicacion" className="h-4 w-4" />
-                        {n.ciudad}
-                      </span>
-                      <span className="font-extrabold text-marino-700">
-                        {soles(n.precioOfrecido)}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
       </main>
 
       <PieDePagina />

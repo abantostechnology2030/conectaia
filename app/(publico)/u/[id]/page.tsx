@@ -52,6 +52,7 @@ export default async function PerfilPublico({
       fotoUrl: true,
       estado: true,
       createdAt: true,
+      fotosHabilidades: { select: { id: true, url: true }, orderBy: { orden: 'asc' } },
     },
   })
 
@@ -106,6 +107,23 @@ export default async function PerfilPublico({
           <p className="mt-4 border-t border-slate-100 pt-4 whitespace-pre-line text-slate-700">
             {usuario.descripcion}
           </p>
+        )}
+
+        {usuario.fotosHabilidades.length > 0 && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <h2 className="text-sm font-bold text-slate-700">Trabajos y habilidades</h2>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {usuario.fotosHabilidades.map((f) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={f.id}
+                  src={f.url}
+                  alt=""
+                  className="h-28 w-28 rounded-xl border border-slate-200 object-cover"
+                />
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

@@ -16,7 +16,10 @@ export default async function Perfil() {
   const session = await auth()
   const usuarioId = Number(session!.user.id)
 
-  const yo = await prisma.usuario.findUnique({ where: { id: usuarioId } })
+  const yo = await prisma.usuario.findUnique({
+    where: { id: usuarioId },
+    include: { fotosHabilidades: { orderBy: { orden: 'asc' } } },
+  })
   if (!yo) notFound()
 
   const reputacion = await reputacionDe(usuarioId)

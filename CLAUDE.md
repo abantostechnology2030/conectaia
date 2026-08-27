@@ -270,6 +270,22 @@ omitiendo los datos del tutor.
 caso). **`tutorDni` NO es único**: la misma persona puede ser tutor de más de una cuenta, a
 diferencia del `dni` del propio usuario.
 
+**La portada anuncia esto por su cuenta:** justo debajo de las dos puertas hay una tarjeta fija
+—no depende de configuración ni de sesión— con el mensaje de bienvenida a menores de edad y
+personas con discapacidad. Está ahí, y no en el registro, porque a quien le importa esta
+información le importa ANTES de decidir crear la cuenta, no después.
+
+⚠️ **La promesa de "completa la información después, desde tu Perfil" (texto de la casilla de
+discapacidad) se cumple en `/perfil`:** solo a las cuentas con `esPersonaConDiscapacidad = true`
+se les enseña una tarjeta extra, "Muestra tu talento", con el `CampoFotos` compartido con
+necesidad/servicio (mismo componente, mismo límite de 5 fotos) para subir trabajos o habilidades.
+Esas fotos son `Foto` con `usuarioId` en vez de `necesidadId`/`servicioId` —el mismo `guardarFotos`
+y `borrarFoto` de `lib/publicaciones.ts` sirven para las tres, mirando cuál de los tres FK viene
+lleno—, y se muestran en el perfil público (`/u/[id]`) bajo "Trabajos y habilidades" si hay
+alguna. **El `esPersonaConDiscapacidad` se comprueba también en `PATCH /api/perfil`**, no solo en
+que el formulario oculte el campo: sin esa comprobación, cualquier cuenta podría mandar `fotos`
+por la consola del navegador y usar el cupo de `Foto` igual.
+
 ### El DNI: obligatorio en el registro y único (lib/dni.ts)
 El alta pide **DNI de 8 dígitos** junto al nombre, y `Usuario.dni` tiene índice **único**.
 
@@ -776,6 +792,14 @@ solo con los botones. Es lo primero que ve quien llega sin saber qué es esto.
 ⚠️ **Todos los fondos de la portada son claros a propósito.** El nombre "Conecta" es azul marino:
 sobre una superficie oscura desaparecería (ver la regla del pie de página). Si alguna sección se
 pinta en `marino-800`, el logotipo NO puede ir encima.
+
+**El orden de las secciones, de arriba a abajo, es deliberado:** héroe (ilustración, regalo de
+bienvenida, las dos puertas) → tarjeta de inclusión (menores de edad y personas con discapacidad)
+→ Últimas necesidades → Últimos servicios → Cómo funciona → Categorías. Lo más reciente de los dos
+lados del marketplace va ANTES que la explicación de cómo funciona: es la prueba de que hay
+actividad real, y esa prueba convence más que una explicación en abstracto. "Últimos servicios"
+usa `Servicio.publicadoAt`, igual que "Últimas necesidades" usa `Necesidad.publicadaAt`; los dos
+"Ver todas/todos" enlazan a `/buscar?tipo=necesidad|servicio`, no a `/buscar` a secas.
 
 ### Pie de página
 Texto blanco sobre `bg-logo-azul`, en **todas** las pantallas (panel, admin, públicas, login y
