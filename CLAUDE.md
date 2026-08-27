@@ -46,6 +46,7 @@ hecho. Cada uno tiene su sección más abajo.
 | Una subcategoría escrita a mano reaparece sola | Guardar `subcategoriaOtra` sin mirar si se eligió una de la lista | `lib/publicaciones.ts` |
 | Publicar al editar no hace nada y no avisa | El formulario pide `publicada`, pero el dueño solo puede pedir `en_revision` | `NecesidadForm.tsx` |
 | El acento rompe la búsqueda | El regex de tildes reescrito con caracteres literales | `lib/texto.ts` |
+| Una categoría nueva no aparece en el home aunque esté activa | El home limitaba a `take: 12`; `orden` siempre manda las nuevas al final, así que nunca entraban | `app/page.tsx` |
 | Un ajuste de créditos descuadra el saldo | Escribir `usuario.creditos` sin pasar por `mover()` | `lib/creditos.ts` |
 | **Un botón se ve perfecto y al pulsarlo no pasa nada** | Un componente `'use client'` importa un módulo que arrastra Prisma | `lib/lados.ts` |
 | Un lado "apagado" se puede usar igual | Ocultar el enlace sin poner `vetoPorModo` en la API | `lib/modos.ts` |

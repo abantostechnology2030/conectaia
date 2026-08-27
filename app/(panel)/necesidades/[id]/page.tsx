@@ -131,14 +131,14 @@ export default async function DetalleNecesidad({ params }: { params: Promise<{ i
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Ficha */}
         <div className="space-y-4 lg:col-span-2">
-          <article className="tarjeta">
+          <article className="tarjeta-suave border-cielo-200 bg-cielo-50">
             <div className="flex flex-wrap items-center gap-2">
               <Chip {...NECESIDAD[necesidad.estado]} />
-              <span className="chip border-slate-200 bg-slate-50 text-slate-600">
+              <span className="chip border-slate-200 bg-white text-slate-600">
                 {necesidad.categoria.icono} {necesidad.categoria.nombre}
               </span>
               {(necesidad.subcategoria || necesidad.subcategoriaOtra) && (
-                <span className="chip border-slate-200 bg-slate-50 text-slate-600">
+                <span className="chip border-slate-200 bg-white text-slate-600">
                   {necesidad.subcategoria?.nombre ?? necesidad.subcategoriaOtra}
                 </span>
               )}
@@ -173,7 +173,7 @@ export default async function DetalleNecesidad({ params }: { params: Promise<{ i
             </dl>
 
             {necesidad.observaciones && (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mt-4 rounded-xl border border-cielo-200 bg-white p-4">
                 <h3 className="text-sm font-bold text-slate-700">Observaciones</h3>
                 <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{necesidad.observaciones}</p>
               </div>

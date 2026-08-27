@@ -57,7 +57,12 @@ export default async function Portada() {
   const [necesidades, servicios, categorias, ultimasNecesidades, ultimosServicios] = await Promise.all([
     prisma.necesidad.count({ where: { estado: 'publicada' } }),
     prisma.servicio.count({ where: { estado: 'publicado' } }),
-    prisma.categoria.findMany({ where: { activa: true }, orderBy: { orden: 'asc' }, take: 12 }),
+    // Sin `take`: toda categoría activa tiene que aparecer aquí, incluida la
+    // que el admin acabe de crear. `orden` la manda siempre al final
+    // (`(ultima?.orden ?? 0) + 1` en la API de admin), así que un límite fijo
+    // la dejaría fuera para siempre en cuanto ya hubiera esa cantidad activas
+    // —justo lo que pasaba con `take: 12` y el seed de 16 categorías.
+    prisma.categoria.findMany({ where: { activa: true }, orderBy: { orden: 'asc' } }),
     prisma.necesidad.findMany({
       where: { estado: 'publicada' },
       include: { categoria: true },

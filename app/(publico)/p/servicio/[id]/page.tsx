@@ -48,14 +48,14 @@ export default async function ServicioPublico({ params }: { params: Promise<{ id
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
-        <article className="tarjeta">
+        <article className="tarjeta-suave border-menta-200 bg-menta-50">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="chip border-menta-300 bg-menta-50 text-menta-700">🛠️ Servicio</span>
-            <span className="chip border-slate-200 bg-slate-50 text-slate-600">
+            <span className="chip border-menta-300 bg-white text-menta-700">🛠️ Servicio</span>
+            <span className="chip border-slate-200 bg-white text-slate-600">
               {servicio.categoria.icono} {servicio.categoria.nombre}
             </span>
             {(servicio.subcategoria || servicio.subcategoriaOtra) && (
-              <span className="chip border-slate-200 bg-slate-50 text-slate-600">
+              <span className="chip border-slate-200 bg-white text-slate-600">
                 {servicio.subcategoria?.nombre ?? servicio.subcategoriaOtra}
               </span>
             )}
@@ -89,7 +89,7 @@ export default async function ServicioPublico({ params }: { params: Promise<{ id
           </dl>
 
           {servicio.observaciones && (
-            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mt-4 rounded-xl border border-menta-200 bg-white p-4">
               <h2 className="text-sm font-bold text-slate-700">Observaciones</h2>
               <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{servicio.observaciones}</p>
             </div>
