@@ -267,8 +267,12 @@ export default async function Portada() {
               </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {ultimasNecesidades.map((n) => (
-                  <Link key={n.id} href={`/p/necesidad/${n.id}`} className="tarjeta block">
-                    <span className="chip bg-cielo-50 border-cielo-300 text-cielo-700">
+                  <Link
+                    key={n.id}
+                    href={`/p/necesidad/${n.id}`}
+                    className="tarjeta-suave block border-cielo-200 bg-cielo-50"
+                  >
+                    <span className="chip border-cielo-300 bg-white text-cielo-700">
                       {n.categoria.icono} {n.categoria.nombre}
                     </span>
                     <h3 className="mt-2 font-bold text-slate-800">{n.titulo}</h3>
@@ -300,8 +304,12 @@ export default async function Portada() {
               </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {ultimosServicios.map((s) => (
-                  <Link key={s.id} href={`/p/servicio/${s.id}`} className="tarjeta block">
-                    <span className="chip bg-menta-50 border-menta-300 text-menta-700">
+                  <Link
+                    key={s.id}
+                    href={`/p/servicio/${s.id}`}
+                    className="tarjeta-suave block border-menta-200 bg-menta-50"
+                  >
+                    <span className="chip border-menta-300 bg-white text-menta-700">
                       {s.categoria.icono} {s.categoria.nombre}
                     </span>
                     <h3 className="mt-2 font-bold text-slate-800">{s.nombre}</h3>
