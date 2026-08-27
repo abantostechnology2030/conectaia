@@ -75,29 +75,30 @@ export default async function Buscar({
   return (
     <div className="space-y-6">
       <Encabezado
-        titulo="Explorar"
+        titulo={tipo === 'necesidad' ? 'Necesidades Publicadas' : 'Servicios Publicados'}
         subtitulo={`${total} ${tipo === 'necesidad' ? 'necesidad(es)' : 'servicio(s)'} encontrados`}
-        icono="buscar"
+        icono={tipo === 'necesidad' ? 'busco' : 'ofrezco'}
       />
 
-      {/* Las dos caras */}
-      <div className="flex gap-2">
+      {/* Las dos caras, como botones grandes: es el filtro principal de esta
+          pantalla, así que tiene que verse antes que los demás filtros. */}
+      <div className="grid grid-cols-2 gap-3">
         <Link
           href="/buscar?tipo=necesidad"
-          className={`chip ${
+          className={`elevar flex items-center justify-center gap-2 rounded-2xl border-2 px-4 py-4 text-center text-base font-extrabold transition ${
             tipo === 'necesidad'
               ? 'border-cielo-500 bg-cielo-500 text-white'
-              : 'border-slate-300 bg-white text-slate-600'
+              : 'border-cielo-200 bg-cielo-50 text-cielo-700 hover:border-cielo-400'
           }`}
         >
           🔎 Necesidades publicadas
         </Link>
         <Link
           href="/buscar?tipo=servicio"
-          className={`chip ${
+          className={`elevar flex items-center justify-center gap-2 rounded-2xl border-2 px-4 py-4 text-center text-base font-extrabold transition ${
             tipo === 'servicio'
               ? 'border-menta-500 bg-menta-500 text-white'
-              : 'border-slate-300 bg-white text-slate-600'
+              : 'border-menta-200 bg-menta-50 text-menta-700 hover:border-menta-400'
           }`}
         >
           🛠️ Servicios ofrecidos
