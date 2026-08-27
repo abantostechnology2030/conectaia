@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/db'
 import { PieDePagina } from '@/components/PieDePagina'
 import { Icono } from '@/components/Icono'
+import { CategoriasHome } from '@/components/CategoriasHome'
 import { soles } from '@/lib/fechas'
 import { INICIO } from '@/lib/roles'
 import { puerta } from '@/lib/destino'
@@ -366,20 +367,15 @@ export default async function Portada() {
           </div>
         </section>
 
-        {/* Categorías */}
+        {/* Categorías. El switch "Necesito"/"Ofrezco" decide si los enlaces
+            van a `/buscar?tipo=necesidad…` o `?tipo=servicio…`: antes
+            siempre apuntaban a necesidades, el `tipo` por defecto de
+            `/buscar`, así que quien quería explorar oportunidades para
+            ofrecer no tenía por dónde entrar desde aquí. */}
         <section className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="text-center text-2xl font-extrabold text-marino-900">¿Qué necesitas hoy?</h2>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            {categorias.map((c) => (
-              <Link
-                key={c.id}
-                href={`/buscar?categoria=${c.id}`}
-                className="elevar inline-flex items-center gap-2 rounded-xl border border-marino-200 bg-white px-4 py-2.5 text-sm font-semibold text-marino-800 hover:border-marino-400"
-              >
-                <span aria-hidden="true">{c.icono}</span>
-                {c.nombre}
-              </Link>
-            ))}
+          <h2 className="text-center text-2xl font-extrabold text-marino-900">Explora por categoría</h2>
+          <div className="mt-8">
+            <CategoriasHome categorias={categorias} />
           </div>
         </section>
       </main>
