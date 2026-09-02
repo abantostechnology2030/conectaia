@@ -41,6 +41,14 @@ const ok = (cond, texto) => {
   if (!cond) fallos++
 }
 
+// El texto que tiene que salir en el pie de TODAS las pantallas.
+//
+// ⚠️ TEMPORAL: mientras dure el concurso el pie lleva este rótulo en lugar del
+// crédito de SolucionesCTEC. Al devolver `components/PieDePagina.tsx` a su
+// versión de siempre (guardada en CLAUDE.md) hay que poner aquí otra vez
+// 'es un producto de' y descomentar la comprobación del enlace, más abajo.
+const PIE = 'CONCURSO CREA Y EMPRENDE 2026'
+
 const publicas = ['/', '/login', '/registro', '/buscar']
 const privadas = ['/panel', '/creditos', '/trabajos', '/oportunidades', '/perfil', '/notificaciones']
 
@@ -54,8 +62,9 @@ for (const r of publicas) {
   const tieneLogo =
     html.includes('/logotipo.png') || html.includes('/logotipo-menu.png') || html.includes('/hero.webp')
   ok(tieneLogo, `${r} — muestra la marca`)
-  ok(html.includes('es un producto de'), `${r} — lleva el pie de página`)
-  ok(html.includes('solucionesctec.com'), `${r} — enlaza a SolucionesCTEC`)
+  ok(html.includes(PIE), `${r} — lleva el pie de página`)
+  // Vuelve cuando vuelva el pie de SolucionesCTEC:
+  // ok(html.includes('solucionesctec.com'), `${r} — enlaza a SolucionesCTEC`)
 }
 
 console.log('\nPantallas de la aplicación')
@@ -66,7 +75,7 @@ ok(!!u, 'Entra una cuenta de usuario')
 for (const r of privadas) {
   const html = await (await s.pedir(r)).text()
   ok(html.includes('/logotipo-menu.png'), `${r} — muestra el logotipo`)
-  ok(html.includes('es un producto de'), `${r} — lleva el pie de página`)
+  ok(html.includes(PIE), `${r} — lleva el pie de página`)
 }
 
 console.log('\nPanel de administración')
@@ -75,7 +84,7 @@ ok(!!(await a.entrar('admin@conectaia.com', 'admin123')), 'Entra el administrado
 for (const r of ['/admin', '/admin/usuarios', '/admin/recargas']) {
   const html = await (await a.pedir(r)).text()
   ok(html.includes('/logotipo-menu.png'), `${r} — muestra el logotipo`)
-  ok(html.includes('es un producto de'), `${r} — lleva el pie de página`)
+  ok(html.includes(PIE), `${r} — lleva el pie de página`)
 }
 
 console.log('\nArchivos de marca')

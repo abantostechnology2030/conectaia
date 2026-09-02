@@ -5,33 +5,20 @@
  * logotipo (ver `scripts/colores-logo.mjs`), no elegido a ojo. Sobre él va
  * texto blanco, que da un contraste de sobra para leerlo.
  *
- * El nombre de la marca va aquí como TEXTO y no con el logotipo: el logotipo
- * lleva el nombre en azul marino y sobre este fondo desaparecería.
+ * ⚠️ TEMPORAL — mientras dure el concurso, el pie lleva el rótulo
+ * «CONCURSO CREA Y EMPRENDE 2026» en lugar del crédito de SolucionesCTEC.
+ * El original está guardado en CLAUDE.md ("Pie de página"), con el JSX exacto
+ * para devolverlo tal cual; hay que revertir ADEMÁS la constante `PIE` de
+ * `scripts/probar-marca.mjs`, que es la que comprueba este texto en todas las
+ * pantallas.
+ *
+ * Sea cual sea el rótulo, el pie sale de este único componente: no duplicarlo
+ * en ninguna pantalla, o cambiarlo dejará de ser un solo cambio.
  */
 export function PieDePagina() {
   return (
     <footer className="bg-logo-azul px-4 py-5 text-center">
-      <p className="text-sm text-white">
-        <span className="font-bold">ConectaIA</span> © es un producto de{' '}
-        <a
-          href="https://www.solucionesctec.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-bold text-white underline decoration-white/50 underline-offset-2 transition hover:decoration-white"
-        >
-          SolucionesCTEC
-        </a>
-      </p>
-      <p className="mt-1">
-        <a
-          href="https://www.solucionesctec.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-white/80 underline decoration-white/40 underline-offset-2 transition hover:text-white"
-        >
-          www.solucionesctec.com
-        </a>
-      </p>
+      <p className="text-sm font-bold tracking-wide text-white">CONCURSO CREA Y EMPRENDE 2026</p>
     </footer>
   )
 }

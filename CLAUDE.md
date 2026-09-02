@@ -9,6 +9,7 @@
 5. **Actualizar CLAUDE.md** después de cada cambio significativo y al inicio de cada sesión.
 6. **Si la instrucción no es clara**, preguntar antes de ejecutar — nunca asumir.
 7. **No modificar procesos que ya estén funcionando y validados** — si algo funciona, no tocarlo.
+8. **Comunicarse SIEMPRE en español** con el usuario (mensajes, explicaciones y preguntas).
 
 ---
 
@@ -802,12 +803,57 @@ actividad real, y esa prueba convence más que una explicación en abstracto. "�
 usa `Servicio.publicadoAt`, igual que "Últimas necesidades" usa `Necesidad.publicadaAt`; los dos
 "Ver todas/todos" enlazan a `/buscar?tipo=necesidad|servicio`, no a `/buscar` a secas.
 
-### Pie de página
-Texto blanco sobre `bg-logo-azul`, en **todas** las pantallas (panel, admin, públicas, login y
-registro):
+### Pie de página — ⚠️ CAMBIADO TEMPORALMENTE (concurso)
+**Ahora mismo el pie dice `CONCURSO CREA Y EMPRENDE 2026`, centrado**, y NO el crédito de
+SolucionesCTEC. Es un cambio temporal pedido a propósito: **hay que devolverlo al original**
+cuando termine el concurso.
 
-> **ConectaIA** © es un producto de [SolucionesCTEC](https://www.solucionesctec.com)
-> www.solucionesctec.com
+Sigue siendo texto blanco centrado sobre `bg-logo-azul`, en **todas** las pantallas (panel, admin,
+públicas, login y registro): lo único que cambió es el contenido.
+
+#### Cómo volver al pie de siempre
+Son dos archivos, y hay que tocar los dos o el flujo automatizado se queda comprobando un texto que
+ya no está:
+
+1. **`components/PieDePagina.tsx`** — devolver el cuerpo del `<footer>` a esto, tal cual:
+
+```tsx
+<footer className="bg-logo-azul px-4 py-5 text-center">
+  <p className="text-sm text-white">
+    <span className="font-bold">ConectaIA</span> © es un producto de{' '}
+    <a
+      href="https://www.solucionesctec.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-bold text-white underline decoration-white/50 underline-offset-2 transition hover:decoration-white"
+    >
+      SolucionesCTEC
+    </a>
+  </p>
+  <p className="mt-1">
+    <a
+      href="https://www.solucionesctec.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-xs text-white/80 underline decoration-white/40 underline-offset-2 transition hover:text-white"
+    >
+      www.solucionesctec.com
+    </a>
+  </p>
+</footer>
+```
+
+   Que, leído, es:
+
+   > **ConectaIA** © es un producto de [SolucionesCTEC](https://www.solucionesctec.com)
+   > www.solucionesctec.com
+
+2. **`scripts/probar-marca.mjs`** — la constante `PIE` de arriba del archivo vuelve a
+   `'es un producto de'`, y se descomenta la comprobación del enlace a `solucionesctec.com`.
+
+⚠️ **El pie va en TODAS las pantallas y sale de un único componente.** Sea cual sea el texto, no
+duplicarlo en ninguna pantalla: cambiar `components/PieDePagina.tsx` tiene que seguir siendo
+suficiente para cambiarlo en toda la aplicación.
 
 Comprobación: `node scripts/probar-marca.mjs` recorre las pantallas públicas, las del usuario y las
 del admin verificando que en todas está el logotipo y el pie.
